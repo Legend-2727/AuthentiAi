@@ -14,6 +14,8 @@ export interface Database {
           id: string
           username: string
           email: string
+          name: string | null
+          profile_img_url: string | null
           created_at: string
           status: string
         }
@@ -21,6 +23,8 @@ export interface Database {
           id?: string
           username: string
           email: string
+          name?: string | null
+          profile_img_url?: string | null
           created_at?: string
           status?: string
         }
@@ -28,6 +32,8 @@ export interface Database {
           id?: string
           username?: string
           email?: string
+          name?: string | null
+          profile_img_url?: string | null
           created_at?: string
           status?: string
         }
@@ -35,6 +41,43 @@ export interface Database {
           {
             foreignKeyName: "users_id_fkey"
             columns: ["id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      videos: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          script: string
+          video_url: string | null
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          script: string
+          video_url?: string | null
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          script?: string
+          video_url?: string | null
+          status?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_user_id_fkey"
+            columns: ["user_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]
           }

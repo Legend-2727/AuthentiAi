@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, User, Home, Settings, Menu, X } from 'lucide-react';
+import { LogOut, User, Home, Settings, Menu, X, Video, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardHome from './DashboardHome';
+import ProfileSettings from './ProfileSettings';
+import CreateContent from './CreateContent';
+import CreateVideo from './CreateVideo';
+import MyVideos from './MyVideos';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -21,7 +25,6 @@ const Dashboard = () => {
     await signOut();
   };
 
-  // Dashboard layout with sidebar navigation
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Mobile menu button */}
@@ -43,7 +46,7 @@ const Dashboard = () => {
       >
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-center h-16 px-4 bg-indigo-600">
-            <h1 className="text-xl font-bold text-white">Hackathon Platform</h1>
+            <h1 className="text-xl font-bold text-white">AuthentiAi</h1>
           </div>
           <div className="flex-1 overflow-y-auto py-4 space-y-1">
             <div className="px-4 py-4 border-b border-gray-200">
@@ -64,7 +67,7 @@ const Dashboard = () => {
             
             <nav className="mt-5 px-2 space-y-1">
               <a
-                href="#"
+                href="/dashboard"
                 className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-indigo-600 bg-indigo-50"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -72,12 +75,28 @@ const Dashboard = () => {
                 Dashboard
               </a>
               <a
-                href="#"
+                href="/dashboard/profile"
                 className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <Settings className="mr-3 h-5 w-5" />
-                Settings
+                <User className="mr-3 h-5 w-5" />
+                Profile Settings
+              </a>
+              <a
+                href="/dashboard/create"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Plus className="mr-3 h-5 w-5" />
+                Create Content
+              </a>
+              <a
+                href="/dashboard/my-videos"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Video className="mr-3 h-5 w-5" />
+                My Videos
               </a>
               <button
                 onClick={handleSignOut}
@@ -97,7 +116,11 @@ const Dashboard = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Routes>
               <Route path="/" element={<DashboardHome />} />
-              <Route path="*" element={<Navigate to="/dashboard\" replace />} />
+              <Route path="/profile" element={<ProfileSettings />} />
+              <Route path="/create" element={<CreateContent />} />
+              <Route path="/create/video" element={<CreateVideo />} />
+              <Route path="/my-videos" element={<MyVideos />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>
         </main>
