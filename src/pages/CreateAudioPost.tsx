@@ -113,8 +113,19 @@ const CreateAudioPost = () => {
   // Generate content hash for authenticity
   useEffect(() => {
     if (watchedScript) {
-      const hash = btoa(watchedScript + Date.now()).substring(0, 16);
-      setContentHash(hash);
+      try {
+        // Convert the script to UTF-8 bytes, then to a Latin-1 compatible string for btoa
+        const encoder = new TextEncoder();
+        const utf8Bytes = encoder.encode(watchedScript + Date.now());
+        const latin1String = String.fromCharCode(...utf8Bytes);
+        const hash = btoa(latin1String).substring(0, 16);
+        setContentHash(hash);
+      } catch (error) {
+        console.error('Error generating content hash:', error);
+        // Fallback to a simple hash if btoa fails
+        const fallbackHash = (watchedScript + Date.now()).slice(0, 16);
+        setContentHash(fallbackHash);
+      }
     }
   }, [watchedScript]);
 
