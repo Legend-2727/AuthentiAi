@@ -88,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: data.user.id,
             username,
             email,
+            name: username, // Provide the required name field
           },
         ]);
       }
