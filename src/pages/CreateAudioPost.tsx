@@ -43,6 +43,7 @@ const CreateAudioPost = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [currentAudioPost, setCurrentAudioPost] = useState<string | null>(null);
   const [contentHash, setContentHash] = useState<string>('');
+  const [isApiAvailable, setIsApiAvailable] = useState(false);
 
   const {
     register,
@@ -66,42 +67,67 @@ const CreateAudioPost = () => {
         const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
         
         if (!apiKey) {
-          console.warn('No ElevenLabs API key found. Using mock voices.');
-          // Fallback to mock voices
-          const mockVoices: ElevenLabsVoice[] = [
+          console.warn('No ElevenLabs API key found. Using demo mode.');
+          setIsApiAvailable(false);
+          // Use demo voices when no API key is available
+          const demoVoices: ElevenLabsVoice[] = [
             {
-              voice_id: 'rachel',
-              name: 'Rachel',
-              category: 'narration',
-              description: 'Calm and professional female voice',
-              preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/rachel/preview.mp3'
+              voice_id: 'demo-voice-1',
+              name: 'Demo Voice 1',
+              category: 'demo',
+              description: 'Demo voice for testing (no API key required)'
             },
             {
-              voice_id: 'drew',
-              name: 'Drew',
-              category: 'narration',
-              description: 'Warm and engaging male voice',
-              preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/drew/preview.mp3'
-            },
-            {
-              voice_id: 'clyde',
-              name: 'Clyde',
-              category: 'conversational',
-              description: 'Friendly and approachable male voice',
-              preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/clyde/preview.mp3'
-            },
-            {
-              voice_id: 'bella',
-              name: 'Bella',
-              category: 'conversational',
-              description: 'Expressive and dynamic female voice',
-              preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/bella/preview.mp3'
+              voice_id: 'demo-voice-2',
+              name: 'Demo Voice 2',
+              category: 'demo',
+              description: 'Demo voice for testing (no API key required)'
             }
           ];
           
-          setVoices(mockVoices);
-          if (mockVoices.length > 0) {
-            setValue('voiceId', mockVoices[0].voice_id);
+          setVoices(demoVoices);
+          if (demoVoices.length > 0) {
+            setValue('voiceId', demoVoices[0].voice_id);
+          }
+          return;
+        }
+
+        // Test API key validity first
+        const testResponse = await fetch('https://api.elevenlabs.io/v1/user', {
+          headers: {
+            'xi-api-key': apiKey,
+          },
+        });
+
+        if (!testResponse.ok) {
+          if (testResponse.status === 401) {
+            console.warn('ElevenLabs API key is invalid. Using demo mode.');
+            toast.warning('ElevenLabs API key is invalid. Using demo mode.');
+          } else {
+            console.warn(`ElevenLabs API error: ${testResponse.status}. Using demo mode.`);
+            toast.warning('ElevenLabs API is unavailable. Using demo mode.');
+          }
+          setIsApiAvailable(false);
+          
+          // Use demo voices when API key is invalid
+          const demoVoices: ElevenLabsVoice[] = [
+            {
+              voice_id: 'demo-voice-1',
+              name: 'Demo Voice 1',
+              category: 'demo',
+              description: 'Demo voice for testing (API unavailable)'
+            },
+            {
+              voice_id: 'demo-voice-2',
+              name: 'Demo Voice 2',
+              category: 'demo',
+              description: 'Demo voice for testing (API unavailable)'
+            }
+          ];
+          
+          setVoices(demoVoices);
+          if (demoVoices.length > 0) {
+            setValue('voiceId', demoVoices[0].voice_id);
           }
           return;
         }
@@ -130,29 +156,39 @@ const CreateAudioPost = () => {
         }));
         
         setVoices(transformedVoices);
+        setIsApiAvailable(true);
         if (transformedVoices.length > 0) {
           setValue('voiceId', transformedVoices[0].voice_id);
         }
         
         console.log(`Loaded ${transformedVoices.length} voices from ElevenLabs`);
+        toast.success(`Loaded ${transformedVoices.length} voices from ElevenLabs`);
       } catch (error) {
         console.error('Error loading voices:', error);
-        toast.error('Failed to load voices. Using fallback voices.');
+        setIsApiAvailable(false);
         
-        // Fallback to mock voices on error
-        const mockVoices: ElevenLabsVoice[] = [
+        // Fallback to demo voices on any error
+        const demoVoices: ElevenLabsVoice[] = [
           {
-            voice_id: 'rachel',
-            name: 'Rachel',
-            category: 'narration',
-            description: 'Calm and professional female voice'
+            voice_id: 'demo-voice-1',
+            name: 'Demo Voice 1',
+            category: 'demo',
+            description: 'Demo voice for testing (API error)'
+          },
+          {
+            voice_id: 'demo-voice-2',
+            name: 'Demo Voice 2',
+            category: 'demo',
+            description: 'Demo voice for testing (API error)'
           }
         ];
         
-        setVoices(mockVoices);
-        if (mockVoices.length > 0) {
-          setValue('voiceId', mockVoices[0].voice_id);
+        setVoices(demoVoices);
+        if (demoVoices.length > 0) {
+          setValue('voiceId', demoVoices[0].voice_id);
         }
+        
+        toast.warning('Using demo mode. Add a valid VITE_ELEVENLABS_API_KEY to .env for real TTS.');
       } finally {
         setVoicesLoading(false);
       }
@@ -185,8 +221,9 @@ const CreateAudioPost = () => {
     try {
       const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
       
-      if (!apiKey) {
-        console.warn('No ElevenLabs API key found. Using demo audio.');
+      // If API is not available or voice is a demo voice, generate demo audio
+      if (!isApiAvailable || !apiKey || voiceId.startsWith('demo-voice')) {
+        console.log('Generating demo audio (API not available or demo voice selected)');
         
         // Create a simple audio context to generate a tone as demo
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -195,9 +232,12 @@ const CreateAudioPost = () => {
         const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
         const data = buffer.getChannelData(0);
         
-        // Generate a simple tone
+        // Generate a simple tone sequence
         for (let i = 0; i < data.length; i++) {
-          data[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.1;
+          const time = i / sampleRate;
+          // Create a simple melody with different frequencies
+          const frequency = 440 + Math.sin(time * 2) * 100;
+          data[i] = Math.sin(2 * Math.PI * frequency * time) * 0.1 * Math.exp(-time * 0.5);
         }
         
         // Convert to WAV blob
@@ -205,7 +245,7 @@ const CreateAudioPost = () => {
         const audioUrl = URL.createObjectURL(wavBlob);
         setGeneratedAudio(audioUrl);
         
-        toast.success('Demo audio generated! (Add VITE_ELEVENLABS_API_KEY to .env for real TTS)');
+        toast.success('Demo audio generated! Add a valid ElevenLabs API key for real TTS.');
         return audioUrl;
       }
 
@@ -238,7 +278,27 @@ const CreateAudioPost = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('ElevenLabs API error:', response.status, errorText);
-        throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+        
+        // If there's an API error, fall back to demo audio
+        console.log('Falling back to demo audio due to API error');
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const duration = 5;
+        const sampleRate = audioContext.sampleRate;
+        const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < data.length; i++) {
+          const time = i / sampleRate;
+          const frequency = 440 + Math.sin(time * 2) * 100;
+          data[i] = Math.sin(2 * Math.PI * frequency * time) * 0.1 * Math.exp(-time * 0.5);
+        }
+        
+        const wavBlob = audioBufferToWav(buffer);
+        const audioUrl = URL.createObjectURL(wavBlob);
+        setGeneratedAudio(audioUrl);
+        
+        toast.warning('API error occurred. Generated demo audio instead.');
+        return audioUrl;
       }
 
       const audioBlob = await response.blob();
@@ -251,8 +311,33 @@ const CreateAudioPost = () => {
       return audioUrl;
     } catch (error) {
       console.error('Error generating audio:', error);
-      toast.error(`Failed to generate audio: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      throw error;
+      
+      // Always fall back to demo audio on any error
+      try {
+        console.log('Falling back to demo audio due to error');
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const duration = 5;
+        const sampleRate = audioContext.sampleRate;
+        const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < data.length; i++) {
+          const time = i / sampleRate;
+          const frequency = 440 + Math.sin(time * 2) * 100;
+          data[i] = Math.sin(2 * Math.PI * frequency * time) * 0.1 * Math.exp(-time * 0.5);
+        }
+        
+        const wavBlob = audioBufferToWav(buffer);
+        const audioUrl = URL.createObjectURL(wavBlob);
+        setGeneratedAudio(audioUrl);
+        
+        toast.warning('Error occurred. Generated demo audio instead.');
+        return audioUrl;
+      } catch (fallbackError) {
+        console.error('Even demo audio generation failed:', fallbackError);
+        toast.error('Failed to generate any audio. Please try again.');
+        throw fallbackError;
+      }
     } finally {
       setLoading(false);
     }
@@ -424,6 +509,11 @@ const CreateAudioPost = () => {
               <p className="mt-1 text-gray-600">
                 Generate AI-powered podcasts or upload your own audio content.
               </p>
+              {!isApiAvailable && (
+                <p className="mt-1 text-sm text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                  Demo mode: Add VITE_ELEVENLABS_API_KEY to .env for real TTS
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -551,7 +641,7 @@ const CreateAudioPost = () => {
                   ) : (
                     <Mic className="h-4 w-4 mr-2" />
                   )}
-                  {loading ? 'Generating Audio...' : 'Generate AI Podcast'}
+                  {loading ? 'Generating Audio...' : isApiAvailable ? 'Generate AI Podcast' : 'Generate Demo Audio'}
                 </motion.button>
               </>
             )}
