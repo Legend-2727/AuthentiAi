@@ -132,12 +132,57 @@ const CreateAudioPost = () => {
   const generateAudio = async (script: string, voiceId: string, feedback?: string) => {
     setLoading(true);
     try {
-      // For demo purposes, we'll create a mock audio blob
-      // In production, this would use the actual ElevenLabs API
-      const mockAudioResponse = await fetch('/api/placeholder/audio.mp3');
-      const audioBlob = await mockAudioResponse.blob();
+      // Check if we have an ElevenLabs API key in environment variables
+      const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
       
-      // Create a URL for the audio blob
+      if (!apiKey) {
+        // Fallback to demo audio for development
+        console.warn('No ElevenLabs API key found. Using demo audio.');
+        
+        // Create a simple audio context to generate a tone as demo
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const duration = 5; // 5 seconds
+        const sampleRate = audioContext.sampleRate;
+        const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        // Generate a simple tone
+        for (let i = 0; i < data.length; i++) {
+          data[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.1;
+        }
+        
+        // Convert to WAV blob
+        const wavBlob = audioBufferToWav(buffer);
+        const audioUrl = URL.createObjectURL(wavBlob);
+        setGeneratedAudio(audioUrl);
+        
+        toast.success('Demo audio generated! (Add VITE_ELEVENLABS_API_KEY to .env for real TTS)');
+        return audioUrl;
+      }
+
+      // Real ElevenLabs API call
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          text: feedback ? `${script}\n\nUser feedback: ${feedback}` : script,
+          model_id: 'eleven_monolingual_v1',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+      }
+
+      const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       setGeneratedAudio(audioUrl);
       
@@ -145,11 +190,52 @@ const CreateAudioPost = () => {
       return audioUrl;
     } catch (error) {
       console.error('Error generating audio:', error);
-      toast.error('Failed to generate audio. Please try again.');
+      toast.error(`Failed to generate audio: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to convert AudioBuffer to WAV blob
+  const audioBufferToWav = (buffer: AudioBuffer): Blob => {
+    const length = buffer.length;
+    const arrayBuffer = new ArrayBuffer(44 + length * 2);
+    const view = new DataView(arrayBuffer);
+    const channels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    
+    // WAV header
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + length * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, channels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, length * 2, true);
+    
+    // Convert float samples to 16-bit PCM
+    const data = buffer.getChannelData(0);
+    let offset = 44;
+    for (let i = 0; i < length; i++) {
+      const sample = Math.max(-1, Math.min(1, data[i]));
+      view.setInt16(offset, sample * 0x7FFF, true);
+      offset += 2;
+    }
+    
+    return new Blob([arrayBuffer], { type: 'audio/wav' });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
