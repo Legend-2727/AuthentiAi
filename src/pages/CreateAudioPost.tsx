@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { ElevenLabsService, ElevenLabsVoice } from '../lib/elevenlabs';
+import { ElevenLabsVoice } from '../lib/elevenlabs';
 import { useAudioPosts } from '../hooks/useAudioPosts';
 import VoiceSelector from '../components/VoiceSelector';
 import AudioPlayer from '../components/AudioPlayer';
@@ -63,35 +63,89 @@ const CreateAudioPost = () => {
   useEffect(() => {
     const loadVoices = async () => {
       try {
-        // For demo purposes, using mock voices since we don't have the actual API key
+        const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+        
+        if (!apiKey) {
+          console.warn('No ElevenLabs API key found. Using mock voices.');
+          // Fallback to mock voices
+          const mockVoices: ElevenLabsVoice[] = [
+            {
+              voice_id: 'rachel',
+              name: 'Rachel',
+              category: 'narration',
+              description: 'Calm and professional female voice',
+              preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/rachel/preview.mp3'
+            },
+            {
+              voice_id: 'drew',
+              name: 'Drew',
+              category: 'narration',
+              description: 'Warm and engaging male voice',
+              preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/drew/preview.mp3'
+            },
+            {
+              voice_id: 'clyde',
+              name: 'Clyde',
+              category: 'conversational',
+              description: 'Friendly and approachable male voice',
+              preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/clyde/preview.mp3'
+            },
+            {
+              voice_id: 'bella',
+              name: 'Bella',
+              category: 'conversational',
+              description: 'Expressive and dynamic female voice',
+              preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/bella/preview.mp3'
+            }
+          ];
+          
+          setVoices(mockVoices);
+          if (mockVoices.length > 0) {
+            setValue('voiceId', mockVoices[0].voice_id);
+          }
+          return;
+        }
+
+        // Fetch real voices from ElevenLabs API
+        const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+          headers: {
+            'xi-api-key': apiKey,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch voices: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const voiceList = data.voices || [];
+        
+        // Transform the response to match our interface
+        const transformedVoices: ElevenLabsVoice[] = voiceList.map((voice: any) => ({
+          voice_id: voice.voice_id,
+          name: voice.name,
+          category: voice.category || 'general',
+          description: voice.description || '',
+          preview_url: voice.preview_url || ''
+        }));
+        
+        setVoices(transformedVoices);
+        if (transformedVoices.length > 0) {
+          setValue('voiceId', transformedVoices[0].voice_id);
+        }
+        
+        console.log(`Loaded ${transformedVoices.length} voices from ElevenLabs`);
+      } catch (error) {
+        console.error('Error loading voices:', error);
+        toast.error('Failed to load voices. Using fallback voices.');
+        
+        // Fallback to mock voices on error
         const mockVoices: ElevenLabsVoice[] = [
           {
             voice_id: 'rachel',
             name: 'Rachel',
             category: 'narration',
-            description: 'Calm and professional female voice',
-            preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/rachel/preview.mp3'
-          },
-          {
-            voice_id: 'drew',
-            name: 'Drew',
-            category: 'narration',
-            description: 'Warm and engaging male voice',
-            preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/drew/preview.mp3'
-          },
-          {
-            voice_id: 'clyde',
-            name: 'Clyde',
-            category: 'conversational',
-            description: 'Friendly and approachable male voice',
-            preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/clyde/preview.mp3'
-          },
-          {
-            voice_id: 'bella',
-            name: 'Bella',
-            category: 'conversational',
-            description: 'Expressive and dynamic female voice',
-            preview_url: 'https://storage.googleapis.com/eleven-public-prod/premade/voices/bella/preview.mp3'
+            description: 'Calm and professional female voice'
           }
         ];
         
@@ -99,9 +153,6 @@ const CreateAudioPost = () => {
         if (mockVoices.length > 0) {
           setValue('voiceId', mockVoices[0].voice_id);
         }
-      } catch (error) {
-        console.error('Error loading voices:', error);
-        toast.error('Failed to load voices');
       } finally {
         setVoicesLoading(false);
       }
@@ -132,11 +183,9 @@ const CreateAudioPost = () => {
   const generateAudio = async (script: string, voiceId: string, feedback?: string) => {
     setLoading(true);
     try {
-      // Check if we have an ElevenLabs API key in environment variables
       const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
       
       if (!apiKey) {
-        // Fallback to demo audio for development
         console.warn('No ElevenLabs API key found. Using demo audio.');
         
         // Create a simple audio context to generate a tone as demo
@@ -160,33 +209,45 @@ const CreateAudioPost = () => {
         return audioUrl;
       }
 
+      // Prepare the text for generation
+      const textToGenerate = feedback ? `${script}\n\nUser feedback: ${feedback}` : script;
+      
+      console.log('Generating audio with ElevenLabs API...');
+      console.log('Voice ID:', voiceId);
+      console.log('Text length:', textToGenerate.length);
+
       // Real ElevenLabs API call
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'xi-api-key': apiKey,
         },
         body: JSON.stringify({
-          text: feedback ? `${script}\n\nUser feedback: ${feedback}` : script,
+          text: textToGenerate,
           model_id: 'eleven_monolingual_v1',
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.5,
+            style: 0.0,
+            use_speaker_boost: true
           },
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('ElevenLabs API error:', response.status, errorText);
         throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
       }
 
       const audioBlob = await response.blob();
+      console.log('Audio generated successfully. Blob size:', audioBlob.size);
+      
       const audioUrl = URL.createObjectURL(audioBlob);
       setGeneratedAudio(audioUrl);
       
-      toast.success('Audio generated successfully!');
+      toast.success('Audio generated successfully with ElevenLabs!');
       return audioUrl;
     } catch (error) {
       console.error('Error generating audio:', error);
