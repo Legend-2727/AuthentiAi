@@ -48,49 +48,66 @@ const CreateVideo = () => {
         return;
       }
 
-      // Make API request to Tavus
-      const response = await fetch('https://api.tavus.io/v1/videos', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer a04908616a2c4a56b2676dec9e888a5e',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          video_template_id: 'YOUR_TEMPLATE_ID_HERE',
-          video_title: data.title,
-          video_script: data.script,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      // Get Tavus API key from environment
+      const tavusApiKey = import.meta.env.VITE_TAVUS_API_KEY;
+      
+      if (!tavusApiKey) {
+        console.warn('No Tavus API key found. Video will remain in processing state.');
+        toast.success('Video request saved! Processing will begin when API key is configured.');
+        navigate('/dashboard/my-videos');
+        return;
       }
 
-      const result = await response.json();
-      
-      // Update the video record with the API response
-      await supabase
-        .from('videos')
-        .update({
-          status: 'completed',
-          video_url: result.video_url || result.download_url || '',
-        })
-        .eq('id', videoRecord.id);
+      try {
+        // Make API request to Tavus
+        const response = await fetch('https://api.tavus.io/v1/videos', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tavusApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            video_title: data.title,
+            video_script: data.script,
+            // Add other required Tavus parameters as needed
+          }),
+        });
 
-      toast.success('Video generation request submitted successfully!');
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Tavus API error:', response.status, errorText);
+          throw new Error(`Tavus API request failed: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Tavus API response:', result);
+        
+        // Update the video record with the API response
+        await supabase
+          .from('videos')
+          .update({
+            status: 'completed',
+            video_url: result.video_url || result.download_url || '',
+          })
+          .eq('id', videoRecord.id);
+
+        toast.success('Video generated successfully!');
+      } catch (apiError) {
+        console.error('Tavus API error:', apiError);
+        
+        // Update status to failed
+        await supabase
+          .from('videos')
+          .update({ status: 'failed' })
+          .eq('id', videoRecord.id);
+          
+        toast.error('Video generation failed. Please try again.');
+      }
+
       navigate('/dashboard/my-videos');
     } catch (error) {
       console.error('Error creating video:', error);
       toast.error('Failed to create video. Please try again.');
-      
-      // Update status to failed if we have a video record
-      if (user) {
-        await supabase
-          .from('videos')
-          .update({ status: 'failed' })
-          .eq('user_id', user.id)
-          .eq('title', data.title);
-      }
     } finally {
       setLoading(false);
     }
@@ -212,7 +229,7 @@ const CreateVideo = () => {
             <div>
               <h4 className="text-sm font-medium text-gray-900">How it works</h4>
               <p className="text-sm text-gray-600 mt-1">
-                Your video will be generated using AI technology. Processing typically takes 2-5 minutes. 
+                Your video will be generated using Tavus AI technology. Processing typically takes 2-5 minutes. 
                 You'll be able to view and download your video from the "My Videos" section once it's ready.
               </p>
             </div>
