@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, User, Home, Settings, Menu, X, Video, Plus, Mic } from 'lucide-react';
+import { LogOut, User, Home, Settings, Menu, X, Video, Plus, Mic, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardHome from './DashboardHome';
 import ProfileSettings from './ProfileSettings';
@@ -10,6 +10,7 @@ import CreateVideo from './CreateVideo';
 import CreateAudioPost from './CreateAudioPost';
 import MyVideos from './MyVideos';
 import MyAudioPosts from './MyAudioPosts';
+import SocialFeed from './SocialFeed';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -77,6 +78,14 @@ const Dashboard = () => {
                 Dashboard
               </a>
               <a
+                href="/dashboard/feed"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Users className="mr-3 h-5 w-5" />
+                Social Feed
+              </a>
+              <a
                 href="/dashboard/profile"
                 className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -126,6 +135,7 @@ const Dashboard = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Routes>
               <Route path="/" element={<DashboardHome />} />
+              <Route path="/feed" element={<SocialFeed />} />
               <Route path="/profile" element={<ProfileSettings />} />
               <Route path="/create" element={<CreateContent />} />
               <Route path="/create/video" element={<CreateVideo />} />
