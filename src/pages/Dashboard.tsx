@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, User, Home, Settings, Menu, X, Video, Plus } from 'lucide-react';
+import { LogOut, User, Home, Settings, Menu, X, Video, Plus, Mic } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardHome from './DashboardHome';
 import ProfileSettings from './ProfileSettings';
 import CreateContent from './CreateContent';
 import CreateVideo from './CreateVideo';
+import CreateAudioPost from './CreateAudioPost';
 import MyVideos from './MyVideos';
+import MyAudioPosts from './MyAudioPosts';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -98,6 +100,14 @@ const Dashboard = () => {
                 <Video className="mr-3 h-5 w-5" />
                 My Videos
               </a>
+              <a
+                href="/dashboard/my-audio"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Mic className="mr-3 h-5 w-5" />
+                My Audio Posts
+              </a>
               <button
                 onClick={handleSignOut}
                 className="w-full group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -119,7 +129,9 @@ const Dashboard = () => {
               <Route path="/profile" element={<ProfileSettings />} />
               <Route path="/create" element={<CreateContent />} />
               <Route path="/create/video" element={<CreateVideo />} />
+              <Route path="/create-audio" element={<CreateAudioPost />} />
               <Route path="/my-videos" element={<MyVideos />} />
+              <Route path="/my-audio" element={<MyAudioPosts />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>

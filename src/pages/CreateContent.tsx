@@ -10,8 +10,7 @@ const CreateContent = () => {
   };
 
   const handleCreateAudio = () => {
-    // TODO: Implement audio creation flow
-    alert('Audio creation coming soon!');
+    navigate('/dashboard/create-audio');
   };
 
   return (
@@ -59,17 +58,17 @@ const CreateContent = () => {
               whileTap={{ scale: 0.98 }}
               onClick={handleCreateAudio}
             >
-              <div className="bg-gradient-to-br from-green-500 to-teal-600 rounded-lg p-8 text-white shadow-lg hover:shadow-xl transition-shadow opacity-50">
+              <div className="bg-gradient-to-br from-green-500 to-teal-600 rounded-lg p-8 text-white shadow-lg hover:shadow-xl transition-shadow">
                 <div className="flex items-center justify-between mb-4">
                   <Mic className="h-12 w-12" />
                   <ArrowRight className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">Create Audio</h3>
+                <h3 className="text-2xl font-bold mb-2">Create Audio Post</h3>
                 <p className="text-green-100 mb-4">
-                  Generate AI-powered audio content and voiceovers.
+                  Generate AI-powered podcasts or upload your own audio content.
                 </p>
                 <div className="flex items-center text-sm text-green-200">
-                  <span>Coming soon</span>
+                  <span>Click to start creating</span>
                 </div>
               </div>
             </motion.div>
@@ -92,9 +91,9 @@ const CreateContent = () => {
                 <div className="bg-green-100 rounded-full p-3 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
                   <Mic className="h-6 w-6 text-green-600" />
                 </div>
-                <h4 className="font-medium text-gray-900">Voice Content</h4>
+                <h4 className="font-medium text-gray-900">Audio Content</h4>
                 <p className="text-sm text-gray-600 mt-1">
-                  Generate natural-sounding voiceovers and audio
+                  Generate natural-sounding podcasts and audio posts
                 </p>
               </div>
               <div className="text-center">
