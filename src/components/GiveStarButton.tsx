@@ -1,27 +1,48 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
-import { spendStar, getStarBalance } from '../lib/revenuecat';
+import { spendStar, getStarBalance, processStarTransaction } from '../lib/revenuecat';
 import BuyStarsModal from './BuyStarsModal';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 interface GiveStarButtonProps {
   creatorId?: string;
   contentId?: string;
+  contentType?: string;
   onStarGiven?: (success: boolean) => void;
   className?: string;
   variant?: 'default' | 'compact' | 'icon-only';
+  isSharedContent?: boolean;
+  originalCreatorId?: string;
 }
 
 const GiveStarButton = ({ 
   creatorId, 
   contentId, 
+  contentType = 'post',
   onStarGiven, 
   className = '',
-  variant = 'default'
+  variant = 'default',
+  isSharedContent = false,
+  originalCreatorId
 }: GiveStarButtonProps) => {
+  const { user } = useAuth();
   const [isGiving, setIsGiving] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
 
   const handleGiveStar = async () => {
+    if (!user) {
+      toast.error('You must be logged in to give stars');
+      onStarGiven?.(false);
+      return;
+    }
+    
+    if (!creatorId) {
+      toast.error('Creator information is missing');
+      onStarGiven?.(false);
+      return;
+    }
+    
     try {
       setIsGiving(true);
       
@@ -35,24 +56,45 @@ const GiveStarButton = ({
         return;
       }
 
-      // Spend a star
-      const success = spendStar();
-      
-      if (success) {
-        console.log(`Star given to creator ${creatorId} for content ${contentId}`);
+      // Process the star transaction with 80/20 split if shared content
+      if (isSharedContent && originalCreatorId) {
+        const result = await processStarTransaction(
+          user.id,
+          creatorId,
+          1, // Just 1 star for the simple button
+          contentId,
+          contentType,
+          undefined, // No message for simple button
+          true,
+          originalCreatorId
+        );
         
-        // Here you would normally send the star to the backend/creator
-        // For now, we'll just simulate it
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        onStarGiven?.(true);
+        if (result.success) {
+          onStarGiven?.(true);
+        } else {
+          toast.error(result.error || 'Failed to give star');
+          onStarGiven?.(false);
+        }
       } else {
-        // Shouldn't happen if we checked balance, but just in case
-        setShowBuyModal(true);
-        onStarGiven?.(false);
+        // Regular star transaction (no split)
+        const result = await processStarTransaction(
+          user.id,
+          creatorId,
+          1,
+          contentId,
+          contentType
+        );
+        
+        if (result.success) {
+          onStarGiven?.(true);
+        } else {
+          toast.error(result.error || 'Failed to give star');
+          onStarGiven?.(false);
+        }
       }
     } catch (error) {
       console.error('Failed to give star:', error);
+      toast.error('An error occurred while giving star');
       onStarGiven?.(false);
     } finally {
       setIsGiving(false);
@@ -91,7 +133,9 @@ const GiveStarButton = ({
         onClick={handleGiveStar}
         disabled={isGiving}
         className={`${getButtonStyles()} ${className} disabled:opacity-50 disabled:cursor-not-allowed`}
-        title="Give a star to this creator"
+        title={isSharedContent && originalCreatorId 
+          ? "Give a star (80% to original creator, 20% to sharer)" 
+          : "Give a star to this creator"}
       >
         {isGiving ? (
           <>

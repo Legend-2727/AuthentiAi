@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { Camera, Save } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import CreatorWallet from '../components/CreatorWallet';
 
 interface ProfileFormData {
   name: string;
@@ -119,10 +120,12 @@ const ProfileSettings = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="space-y-8"
     >
+      {/* Profile Settings */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-6 py-8 border-b border-gray-200 bg-indigo-50">
-          <h2 className="text-3xl font-bold text-gray-900">Profile Settings</h2>
+          <h2 className="text-3xl font-['Abril_Fatface',_cursive] italic text-gray-900">Profile Settings</h2>
           <p className="mt-1 text-gray-600">
             Manage your account information and preferences.
           </p>
@@ -227,6 +230,9 @@ const ProfileSettings = () => {
           </div>
         </form>
       </div>
+
+      {/* Creator Wallet Section */}
+      <CreatorWallet />
     </motion.div>
   );
 };

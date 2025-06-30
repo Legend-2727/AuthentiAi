@@ -41,6 +41,27 @@ export interface PurchaseResult {
   productIdentifier?: string;
 }
 
+// Star transaction types
+export interface StarTransaction {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  contentId?: string;
+  contentType?: string;
+  starsGiven: number;
+  message?: string;
+  timestamp: number;
+  isSharedContent?: boolean;
+}
+
+export interface StarEarnings {
+  totalEarned: number;
+  pendingPayout: number;
+  totalPaidOut: number;
+  transactions: StarTransaction[];
+  dollarValue: number;
+}
+
 // RevenueCat Web SDK global
 declare global {
   interface Window {
@@ -70,6 +91,11 @@ interface RevenueCatPackage {
     currencyCode: string;
   };
 }
+
+// Constants
+const STAR_DOLLAR_VALUE = 0.01; // Each star is worth $0.01
+const CREATOR_SHARE_PERCENTAGE = 80; // Original creator gets 80%
+const SHARER_SHARE_PERCENTAGE = 20; // Person who shared gets 20%
 
 // RevenueCat configuration
 let isConfigured = false;
@@ -480,6 +506,209 @@ export const spendStar = (): boolean => {
   return false;
 };
 
+// Get user's star earnings
+export const getStarEarnings = (userId: string): StarEarnings => {
+  try {
+    // Get transactions from localStorage
+    const transactions = getStarTransactions();
+    
+    // Filter transactions where this user is the recipient
+    const userTransactions = transactions.filter(t => t.toUserId === userId);
+    
+    // Calculate totals
+    const totalEarned = userTransactions.reduce((sum, t) => sum + t.starsGiven, 0);
+    
+    // For demo purposes, assume 70% of earnings are pending payout
+    const pendingPayout = Math.floor(totalEarned * 0.7);
+    const totalPaidOut = totalEarned - pendingPayout;
+    
+    // Calculate dollar value (each star = $0.01)
+    const dollarValue = totalEarned * STAR_DOLLAR_VALUE;
+    
+    return {
+      totalEarned,
+      pendingPayout,
+      totalPaidOut,
+      transactions: userTransactions,
+      dollarValue
+    };
+  } catch (error) {
+    console.error('Error getting star earnings:', error);
+    return {
+      totalEarned: 0,
+      pendingPayout: 0,
+      totalPaidOut: 0,
+      transactions: [],
+      dollarValue: 0
+    };
+  }
+};
+
+// Process a star transaction with 80/20 split for shared content
+export const processStarTransaction = async (
+  fromUserId: string,
+  toUserId: string,
+  starsGiven: number = 1,
+  contentId?: string,
+  contentType?: string,
+  message?: string,
+  isSharedContent: boolean = false,
+  originalCreatorId?: string
+): Promise<{ success: boolean; error?: string; transaction?: StarTransaction }> => {
+  try {
+    // Check if user has enough stars
+    const currentBalance = getStarBalance();
+    if (currentBalance < starsGiven) {
+      return { success: false, error: 'Insufficient star balance' };
+    }
+    
+    // Deduct stars from sender
+    setStarBalance(currentBalance - starsGiven);
+    
+    // Create transaction record
+    const transaction: StarTransaction = {
+      id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      fromUserId,
+      toUserId,
+      contentId,
+      contentType,
+      starsGiven,
+      message,
+      timestamp: Date.now(),
+      isSharedContent
+    };
+    
+    // If this is shared content and we have the original creator ID
+    if (isSharedContent && originalCreatorId) {
+      // Calculate the split
+      const creatorStars = Math.floor(starsGiven * (CREATOR_SHARE_PERCENTAGE / 100));
+      const sharerStars = starsGiven - creatorStars;
+      
+      console.log(`Star split: ${creatorStars} to original creator, ${sharerStars} to sharer`);
+      
+      // Create two transactions
+      const creatorTransaction: StarTransaction = {
+        id: `tx-${Date.now()}-creator-${Math.random().toString(36).substring(2, 9)}`,
+        fromUserId,
+        toUserId: originalCreatorId,
+        contentId,
+        contentType,
+        starsGiven: creatorStars,
+        message: message ? `${message} (80% creator share)` : '80% creator share',
+        timestamp: Date.now(),
+        isSharedContent: true
+      };
+      
+      const sharerTransaction: StarTransaction = {
+        id: `tx-${Date.now()}-sharer-${Math.random().toString(36).substring(2, 9)}`,
+        fromUserId,
+        toUserId,
+        contentId,
+        contentType,
+        starsGiven: sharerStars,
+        message: message ? `${message} (20% sharer share)` : '20% sharer share',
+        timestamp: Date.now(),
+        isSharedContent: true
+      };
+      
+      // Save both transactions
+      saveStarTransaction(creatorTransaction);
+      saveStarTransaction(sharerTransaction);
+      
+      return { 
+        success: true, 
+        transaction: creatorTransaction // Return the main transaction
+      };
+    } else {
+      // Regular transaction (no split)
+      saveStarTransaction(transaction);
+      
+      return { 
+        success: true, 
+        transaction 
+      };
+    }
+  } catch (error) {
+    console.error('Failed to process star transaction:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    };
+  }
+};
+
+// Save a star transaction to localStorage
+const saveStarTransaction = (transaction: StarTransaction): void => {
+  try {
+    const transactions = getStarTransactions();
+    transactions.push(transaction);
+    localStorage.setItem('veridica_star_transactions', JSON.stringify(transactions));
+    
+    // Trigger event for UI updates
+    window.dispatchEvent(new CustomEvent('starTransactionAdded', { detail: transaction }));
+  } catch (error) {
+    console.error('Error saving star transaction:', error);
+  }
+};
+
+// Get all star transactions from localStorage
+export const getStarTransactions = (): StarTransaction[] => {
+  try {
+    const transactions = localStorage.getItem('veridica_star_transactions');
+    return transactions ? JSON.parse(transactions) : [];
+  } catch (error) {
+    console.error('Error getting star transactions:', error);
+    return [];
+  }
+};
+
+// Get user's transaction history (sent and received)
+export const getUserTransactionHistory = (userId: string): StarTransaction[] => {
+  try {
+    const transactions = getStarTransactions();
+    return transactions.filter(t => t.fromUserId === userId || t.toUserId === userId);
+  } catch (error) {
+    console.error('Error getting user transaction history:', error);
+    return [];
+  }
+};
+
+// Calculate how much a user can cash out (in dollars)
+export const calculateCashoutAmount = (userId: string): number => {
+  try {
+    const earnings = getStarEarnings(userId);
+    return earnings.pendingPayout * STAR_DOLLAR_VALUE;
+  } catch (error) {
+    console.error('Error calculating cashout amount:', error);
+    return 0;
+  }
+};
+
+// Simulate cashing out stars to real money
+export const cashoutStars = async (userId: string, starAmount: number): Promise<{ success: boolean; amount: number; error?: string }> => {
+  try {
+    const earnings = getStarEarnings(userId);
+    
+    if (starAmount > earnings.pendingPayout) {
+      return { success: false, amount: 0, error: 'Insufficient pending stars' };
+    }
+    
+    // Calculate dollar amount
+    const dollarAmount = starAmount * STAR_DOLLAR_VALUE;
+    
+    // In a real app, this would initiate a payment to the user
+    console.log(`Cashing out ${starAmount} stars for $${dollarAmount.toFixed(2)} to user ${userId}`);
+    
+    // For demo purposes, just mark these as paid out
+    // In a real app, you would update the database
+    
+    return { success: true, amount: dollarAmount };
+  } catch (error) {
+    console.error('Error cashing out stars:', error);
+    return { success: false, amount: 0, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
 // Backend integration functions (simplified for now until types are regenerated)
 
 // Get user's star balance from backend (fallback to localStorage for now)
@@ -503,33 +732,6 @@ export const syncStarBalanceWithBackend = async (): Promise<number> => {
   } catch (error) {
     console.error('Failed to sync star balance:', error);
     return getStarBalance();
-  }
-};
-
-// Process star transaction in backend (simplified for now)
-export const processStarTransactionInBackend = async (
-  toUserId: string,
-  starsGiven: number = 1,
-  contentId?: string,
-  contentType?: string,
-  message?: string
-): Promise<{ success: boolean; error?: string }> => {
-  try {
-    // For now, just update local storage
-    // TODO: Implement backend call after regenerating database types
-    const currentBalance = getStarBalance();
-    if (currentBalance >= starsGiven) {
-      setStarBalance(currentBalance - starsGiven);
-      console.log(`Simulated star transaction: ${starsGiven} stars to ${toUserId}`, {
-        contentId, contentType, message
-      });
-      return { success: true };
-    } else {
-      return { success: false, error: 'Insufficient star balance' };
-    }
-  } catch (error) {
-    console.error('Failed to process star transaction:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
 

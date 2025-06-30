@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Clock, Heart, Users, Filter, Search, X, Tag, Lock, Star } from 'lucide-react';
+import { TrendingUp, Clock, Heart, Users, Filter, Search, X, Tag, Lock, Star, Share2 } from 'lucide-react';
 import { useFeed } from '../hooks/useFeed';
-import { SortOption } from '../types/feed';
+import { SortOption, FeedPost as FeedPostType } from '../types/feed';
 import FeedPost from '../components/FeedPost';
 import CommentSection from '../components/CommentSection';
 import { toast } from 'react-toastify';
 import BuyStarsModal from '../components/BuyStarsModal';
+import { useAuth } from '../contexts/AuthContext';
+import { processStarTransaction } from '../lib/revenuecat';
 
 const SocialFeed = () => {
+  const { user } = useAuth();
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [selectedPostForComments, setSelectedPostForComments] = useState<string | null>(null);
   const [searchTags, setSearchTags] = useState<string[]>([]);
@@ -17,6 +20,8 @@ const SocialFeed = () => {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showPremiumContent, setShowPremiumContent] = useState(false);
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedPostForSharing, setSelectedPostForSharing] = useState<FeedPostType | null>(null);
   
   const { posts, postStats, loading, addReaction, sendStarDonation, getAllTags } = useFeed(sortBy, searchTags);
 
@@ -27,6 +32,22 @@ const SocialFeed = () => {
     unlockPrice: Math.floor(Math.random() * 20) + 10, // 10-30 stars
     isUnlocked: false
   }));
+
+  // Generate some shared posts (with original creators)
+  const sharedPosts = posts.slice(3, 6).map(post => {
+    // Create a different creator as the "original" creator
+    const randomIndex = Math.floor(Math.random() * posts.length);
+    const originalCreator = posts[randomIndex].creator;
+    
+    return {
+      post,
+      originalCreator: {
+        id: originalCreator.id,
+        username: originalCreator.username,
+        displayName: originalCreator.display_name
+      }
+    };
+  });
 
   useEffect(() => {
     if (getAllTags) {
@@ -80,17 +101,65 @@ const SocialFeed = () => {
     }
   };
 
-  const unlockPremiumContent = (postId: string, price: number) => {
-    // In a real app, this would make a backend call to process the payment
-    // For now, we'll just simulate it
-    toast.success(`Unlocked premium content for ${price} stars!`);
+  const unlockPremiumContent = async (postId: string, price: number) => {
+    if (!user) {
+      toast.error('You must be logged in to unlock premium content');
+      return;
+    }
     
-    // Update the premium posts to mark this one as unlocked
-    premiumPosts.forEach(post => {
-      if (post.id === postId) {
-        post.isUnlocked = true;
+    try {
+      // Find the post and its creator
+      const post = premiumPosts.find(p => p.id === postId);
+      if (!post) {
+        toast.error('Content not found');
+        return;
       }
-    });
+      
+      // Process the transaction
+      const result = await processStarTransaction(
+        user.id,
+        post.creator.id,
+        price,
+        postId,
+        post.type,
+        'Premium content unlock'
+      );
+      
+      if (result.success) {
+        toast.success(`Unlocked premium content for ${price} stars!`);
+        
+        // Update the premium posts to mark this one as unlocked
+        premiumPosts.forEach(post => {
+          if (post.id === postId) {
+            post.isUnlocked = true;
+          }
+        });
+      } else {
+        toast.error(result.error || 'Failed to unlock content');
+      }
+    } catch (error) {
+      console.error('Error unlocking premium content:', error);
+      toast.error('An error occurred while unlocking content');
+    }
+  };
+
+  const handleSharePost = (post: FeedPostType) => {
+    setSelectedPostForSharing(post);
+    setShowShareModal(true);
+  };
+
+  const sharePost = async () => {
+    if (!user || !selectedPostForSharing) return;
+    
+    try {
+      // In a real app, this would create a new shared post in the database
+      // For now, we'll just show a success message
+      toast.success(`Post shared to your feed! You'll earn 20% of all stars it receives.`);
+      setShowShareModal(false);
+    } catch (error) {
+      console.error('Error sharing post:', error);
+      toast.error('Failed to share post');
+    }
   };
 
   if (loading) {
@@ -267,6 +336,42 @@ const SocialFeed = () => {
         </AnimatePresence>
       </div>
 
+      {/* Shared Content Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-['Abril_Fatface',_cursive] italic text-gray-900 dark:text-white">Shared Content</h2>
+          <div className="text-sm text-gray-600 dark:text-gray-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-lg">
+            80/20 Star Split
+          </div>
+        </div>
+        
+        <div className="mb-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800/50">
+          <p className="text-sm text-indigo-800 dark:text-indigo-200">
+            <strong>How shared content works:</strong> When you give stars to shared content, 80% goes to the original creator and 20% goes to the person who shared it. This rewards both original creation and content curation.
+          </p>
+        </div>
+        
+        <div className="space-y-6">
+          {sharedPosts.map(({ post, originalCreator }) => (
+            <FeedPost
+              key={`shared-${post.id}`}
+              post={post}
+              stats={postStats[post.id] || {
+                reaction_counts: { '❤️': 0, '👏': 0, '🔥': 0, '🎵': 0 },
+                comment_count: 0,
+                star_count: 0,
+                star_value: 0,
+              }}
+              onReaction={handleReaction}
+              onStarDonation={handleStarDonation}
+              onComment={() => setSelectedPostForComments(post.id)}
+              isShared={true}
+              originalCreator={originalCreator}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Regular Feed */}
       <div className="space-y-6">
         {posts.length === 0 ? (
@@ -293,20 +398,30 @@ const SocialFeed = () => {
             </div>
           </div>
         ) : (
-          posts.map((post) => (
-            <FeedPost
-              key={post.id}
-              post={post}
-              stats={postStats[post.id] || {
-                reaction_counts: { '❤️': 0, '👏': 0, '🔥': 0, '🎵': 0 },
-                comment_count: 0,
-                star_count: 0,
-                star_value: 0,
-              }}
-              onReaction={handleReaction}
-              onStarDonation={handleStarDonation}
-              onComment={() => setSelectedPostForComments(post.id)}
-            />
+          posts.slice(0, 3).map((post) => (
+            <div key={post.id} className="relative">
+              <FeedPost
+                post={post}
+                stats={postStats[post.id] || {
+                  reaction_counts: { '❤️': 0, '👏': 0, '🔥': 0, '🎵': 0 },
+                  comment_count: 0,
+                  star_count: 0,
+                  star_value: 0,
+                }}
+                onReaction={handleReaction}
+                onStarDonation={handleStarDonation}
+                onComment={() => setSelectedPostForComments(post.id)}
+              />
+              
+              {/* Share Button (Floating) */}
+              <button
+                onClick={() => handleSharePost(post)}
+                className="absolute top-4 right-4 p-2 bg-white dark:bg-gray-700 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                title="Share this post (earn 20% of stars)"
+              >
+                <Share2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              </button>
+            </div>
           ))
         )}
       </div>
@@ -325,56 +440,77 @@ const SocialFeed = () => {
         isOpen={showBuyStarsModal}
         onClose={() => setShowBuyStarsModal(false)}
       />
+      
+      {/* Share Post Modal */}
+      <AnimatePresence>
+        {showShareModal && selectedPostForSharing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowShareModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Share this post</h3>
+              
+              <div className="mb-6">
+                <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg border border-indigo-100 dark:border-indigo-800/50 mb-4">
+                  <p className="text-sm text-indigo-800 dark:text-indigo-200">
+                    <strong>Earn stars by sharing!</strong> When you share content, you'll receive 20% of all stars given to this post, while the original creator gets 80%.
+                  </p>
+                </div>
+                
+                <div className="flex items-center space-x-3 mb-4">
+                  <img
+                    src={selectedPostForSharing.thumbnail_url || 'https://images.pexels.com/photos/2156881/pexels-photo-2156881.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'}
+                    alt={selectedPostForSharing.title}
+                    className="w-16 h-16 object-cover rounded-md"
+                  />
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white">{selectedPostForSharing.title}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      By {selectedPostForSharing.creator.display_name}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <button
+                    onClick={sharePost}
+                    className="w-full flex items-center justify-center space-x-2 p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    <Share2 className="w-5 h-5" />
+                    <span>Share to My Feed</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/post/${selectedPostForSharing.id}`);
+                      toast.success('Link copied to clipboard!');
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 p-3 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <Copy className="w-5 h-5" />
+                    <span>Copy Link</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                By sharing, you help creators reach a wider audience while earning stars yourself!
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
-  );
-};
-
-// Custom blockchain shield logo component with cursive X
-const BlockchainShieldLogo: React.FC<{ isDark: boolean }> = ({ isDark }) => {
-  const mainColor = isDark ? '#fff' : '#000';
-  const accentColor = isDark ? '#818cf8' : '#4f46e5';
-  
-  return (
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Shield Base */}
-      <path 
-        d="M20 3L5 9V20C5 28.2843 11.7157 35 20 35C28.2843 35 35 28.2843 35 20V9L20 3Z" 
-        stroke={mainColor} 
-        strokeWidth="2" 
-        fill="none"
-      />
-      
-      {/* Blockchain Nodes */}
-      <circle cx="14" cy="16" r="2" fill={accentColor} />
-      <circle cx="20" cy="22" r="2" fill={accentColor} />
-      <circle cx="26" cy="16" r="2" fill={accentColor} />
-      <circle cx="14" cy="28" r="2" fill={accentColor} />
-      <circle cx="26" cy="28" r="2" fill={accentColor} />
-      
-      {/* Blockchain Connections */}
-      <line x1="14" y1="16" x2="20" y2="22" stroke={accentColor} strokeWidth="1" />
-      <line x1="20" y1="22" x2="26" y2="16" stroke={accentColor} strokeWidth="1" />
-      <line x1="14" y1="16" x2="26" y2="16" stroke={accentColor} strokeWidth="1" />
-      <line x1="14" y1="28" x2="20" y2="22" stroke={accentColor} strokeWidth="1" />
-      <line x1="20" y1="22" x2="26" y2="28" stroke={accentColor} strokeWidth="1" />
-      <line x1="14" y1="28" x2="26" y2="28" stroke={accentColor} strokeWidth="1" />
-      
-      {/* Cursive X in the center */}
-      <path 
-        d="M17 19C18 20 19 21 20 22C21 21 22 20 23 19" 
-        stroke={mainColor} 
-        strokeWidth="1.5" 
-        strokeLinecap="round" 
-        fill="none"
-      />
-      <path 
-        d="M23 25C22 24 21 23 20 22C19 23 18 24 17 25" 
-        stroke={mainColor} 
-        strokeWidth="1.5" 
-        strokeLinecap="round" 
-        fill="none"
-      />
-    </svg>
   );
 };
 

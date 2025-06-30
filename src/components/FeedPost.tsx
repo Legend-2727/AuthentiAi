@@ -11,12 +11,15 @@ import {
   Eye,
   Copy,
   ExternalLink,
-  Code
+  Code,
+  User
 } from 'lucide-react';
 import { FeedPost as FeedPostType, PostStats } from '../types/feed';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'react-toastify';
 import GiveStarButton from './GiveStarButton';
+import { useAuth } from '../contexts/AuthContext';
+import { processStarTransaction } from '../lib/revenuecat';
 
 interface FeedPostProps {
   post: FeedPostType;
@@ -24,15 +27,31 @@ interface FeedPostProps {
   onReaction: (postId: string, type: '❤️' | '👏' | '🔥' | '🎵') => void;
   onStarDonation: (postId: string, starCount: number, message?: string) => void;
   onComment: () => void;
+  isShared?: boolean;
+  originalCreator?: {
+    id: string;
+    username: string;
+    displayName: string;
+  };
 }
 
-const FeedPost = ({ post, stats, onReaction, onStarDonation, onComment }: FeedPostProps) => {
+const FeedPost = ({ 
+  post, 
+  stats, 
+  onReaction, 
+  onStarDonation, 
+  onComment,
+  isShared = false,
+  originalCreator
+}: FeedPostProps) => {
+  const { user } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showStarModal, setShowStarModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [starCount, setStarCount] = useState(10);
   const [starMessage, setStarMessage] = useState('');
+  const [isProcessingStars, setIsProcessingStars] = useState(false);
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -67,15 +86,67 @@ const FeedPost = ({ post, stats, onReaction, onStarDonation, onComment }: FeedPo
     setShowShareModal(false);
   };
 
-  const handleStarDonation = () => {
+  const handleStarDonation = async () => {
+    if (!user) {
+      toast.error('You must be logged in to give stars');
+      return;
+    }
+    
     if (starCount < 10) {
       toast.error('Minimum donation is 10 stars');
       return;
     }
-    onStarDonation(post.id, starCount, starMessage);
-    setShowStarModal(false);
-    setStarMessage('');
-    toast.success(`Sent ${starCount} stars to ${post.creator.display_name}!`);
+    
+    setIsProcessingStars(true);
+    
+    try {
+      // Process the star transaction with 80/20 split if shared content
+      if (isShared && originalCreator) {
+        const result = await processStarTransaction(
+          user.id,
+          post.creator.id,
+          starCount,
+          post.id,
+          post.type,
+          starMessage,
+          true,
+          originalCreator.id
+        );
+        
+        if (result.success) {
+          toast.success(`Stars sent! 80% to ${originalCreator.displayName} and 20% to ${post.creator.display_name}`);
+          onStarDonation(post.id, starCount, starMessage);
+          setShowStarModal(false);
+          setStarMessage('');
+        } else {
+          toast.error(result.error || 'Failed to send stars');
+        }
+      } else {
+        // Regular star transaction (no split)
+        const result = await processStarTransaction(
+          user.id,
+          post.creator.id,
+          starCount,
+          post.id,
+          post.type,
+          starMessage
+        );
+        
+        if (result.success) {
+          toast.success(`${starCount} stars sent to ${post.creator.display_name}!`);
+          onStarDonation(post.id, starCount, starMessage);
+          setShowStarModal(false);
+          setStarMessage('');
+        } else {
+          toast.error(result.error || 'Failed to send stars');
+        }
+      }
+    } catch (error) {
+      console.error('Error processing star donation:', error);
+      toast.error('An error occurred while sending stars');
+    } finally {
+      setIsProcessingStars(false);
+    }
   };
 
   const reactionEmojis = ['❤️', '👏', '🔥', '🎵'] as const;
@@ -115,6 +186,19 @@ const FeedPost = ({ post, stats, onReaction, onStarDonation, onComment }: FeedPo
             <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
           </div>
         </div>
+        
+        {/* Shared Content Attribution */}
+        {isShared && originalCreator && (
+          <div className="mt-3 flex items-center text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg">
+            <User className="w-4 h-4 mr-2" />
+            <span>
+              Original creator: <span className="font-medium text-indigo-600 dark:text-indigo-400">@{originalCreator.username}</span>
+            </span>
+            <div className="ml-auto text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+              Shared Content
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -275,10 +359,16 @@ const FeedPost = ({ post, stats, onReaction, onStarDonation, onComment }: FeedPo
             contentId={post.id}
             onStarGiven={(success) => {
               if (success) {
-                toast.success(`Star sent to ${post.creator.display_name}!`);
+                if (isShared && originalCreator) {
+                  toast.success(`Star split: 80% to ${originalCreator.displayName}, 20% to ${post.creator.display_name}`);
+                } else {
+                  toast.success(`Star sent to ${post.creator.display_name}!`);
+                }
               }
             }}
             variant="default"
+            isSharedContent={isShared}
+            originalCreatorId={originalCreator?.id}
           />
         </div>
       </div>
@@ -300,7 +390,23 @@ const FeedPost = ({ post, stats, onReaction, onStarDonation, onComment }: FeedPo
               className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border dark:border-gray-700"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Send Stars to {post.creator.display_name}</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                {isShared && originalCreator 
+                  ? `Send Stars (Split between ${originalCreator.displayName} and ${post.creator.display_name})`
+                  : `Send Stars to ${post.creator.display_name}`}
+              </h3>
+              
+              {isShared && originalCreator && (
+                <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                  <p className="text-sm text-indigo-800 dark:text-indigo-200">
+                    <strong>Note:</strong> This is shared content. Stars will be split with:
+                  </p>
+                  <ul className="text-sm text-indigo-700 dark:text-indigo-300 mt-1">
+                    <li>• 80% to original creator ({originalCreator.displayName})</li>
+                    <li>• 20% to content sharer ({post.creator.display_name})</li>
+                  </ul>
+                </div>
+              )}
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -342,9 +448,17 @@ const FeedPost = ({ post, stats, onReaction, onStarDonation, onComment }: FeedPo
                 </button>
                 <button
                   onClick={handleStarDonation}
-                  className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
+                  disabled={isProcessingStars}
+                  className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Send Stars
+                  {isProcessingStars ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                      Processing...
+                    </div>
+                  ) : (
+                    'Send Stars'
+                  )}
                 </button>
               </div>
             </motion.div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, User, Home, Menu, X, Video, Plus, Mic, Users, Shield, Star, Lock } from 'lucide-react';
+import { LogOut, User, Home, Menu, X, Video, Plus, Mic, Users, Shield, Star, Lock, Wallet } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 import UserAvatar from '../components/UserAvatar';
@@ -18,6 +18,7 @@ import MyAudioPosts from './MyAudioPosts';
 import SocialFeed from './SocialFeed';
 import OwnershipDemo from './OwnershipDemo';
 import PremiumContent from './PremiumContent';
+import CreatorWallet from '../components/CreatorWallet';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -152,6 +153,14 @@ const Dashboard = () => {
                 Premium Content
               </a>
               <a
+                href="/dashboard/wallet"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Wallet className="mr-3 h-5 w-5" />
+                Creator Wallet
+              </a>
+              <a
                 href="/dashboard/home"
                 className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -235,6 +244,7 @@ const Dashboard = () => {
               <Route path="/home" element={<DashboardHome />} />
               <Route path="/feed" element={<SocialFeed />} />
               <Route path="/premium" element={<PremiumContent />} />
+              <Route path="/wallet" element={<CreatorWallet />} />
               <Route path="/profile" element={<ProfileSettings />} />
               <Route path="/create" element={<CreateContent />} />
               <Route path="/create/video" element={<CreateVideo />} />
