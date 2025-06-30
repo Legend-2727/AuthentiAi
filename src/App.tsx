@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import AuthentiAiBadge from './components/AuthentiAiBadge';
+import VeridicalBadge from './components/VeridicalBadge';
 import MouseWaveEffect from './components/MouseWaveEffect';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
@@ -38,7 +38,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AuthentiAiBadge />
+        <VeridicalBadge />
         <MouseWaveEffect />
         <Routes>
           <Route path="/login" element={<Login />} />

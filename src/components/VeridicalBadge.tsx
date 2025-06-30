@@ -1,11 +1,11 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
-interface AuthentiAiBadgeProps {
+interface VeridicalBadgeProps {
   className?: string;
 }
 
-const AuthentiAiBadge: React.FC<AuthentiAiBadgeProps> = ({ 
+const VeridicalBadge: React.FC<VeridicalBadgeProps> = ({ 
   className = '' 
 }) => {
   const { isDark } = useTheme();
@@ -28,7 +28,7 @@ const AuthentiAiBadge: React.FC<AuthentiAiBadgeProps> = ({
       `}>
         <img 
           src={getImageSrc()}
-          alt="AuthentiAi"
+          alt="Veridica"
           className="w-10 h-10 object-contain"
         />
       </div>
@@ -36,4 +36,4 @@ const AuthentiAiBadge: React.FC<AuthentiAiBadgeProps> = ({
   );
 };
 
-export default AuthentiAiBadge;
+export default VeridicalBadge;

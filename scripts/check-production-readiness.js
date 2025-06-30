@@ -8,10 +8,10 @@
  */
 
 /**
- * Production Readiness Checker for AuthentiAI
+ * Production Readiness Checker for Veridica
  */
 
-console.log('🔍 Checking AuthentiAI Production Readiness...\n');
+console.log('🔍 Checking Veridica Production Readiness...\n');
 
 // Check critical environment variables
 const requiredEnvVars = [

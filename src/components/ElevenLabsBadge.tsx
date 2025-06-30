@@ -1,11 +1,11 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
-interface AuthentiAiBadgeProps {
+interface ElevenLabsBadgeProps {
   className?: string;
 }
 
-const AuthentiAiBadge: React.FC<AuthentiAiBadgeProps> = ({ 
+const ElevenLabsBadge: React.FC<ElevenLabsBadgeProps> = ({ 
   className = '' 
 }) => {
   const { isDark } = useTheme();
@@ -29,11 +29,11 @@ const AuthentiAiBadge: React.FC<AuthentiAiBadgeProps> = ({
           `}>
             Ai
           </div>
-          <span className="font-semibold text-sm">AuthentiAi</span>
+          <span className="font-semibold text-sm">Veridica</span>
         </div>
       </div>
     </div>
   );
 };
 
-export default AuthentiAiBadge;
+export default ElevenLabsBadge;

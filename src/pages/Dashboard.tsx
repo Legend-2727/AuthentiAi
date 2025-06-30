@@ -41,7 +41,7 @@ const Dashboard = () => {
             className="flex items-center space-x-3 focus:outline-none"
           >
             <UserAvatar user={user} size="sm" />
-            <span className="font-semibold text-gray-900 dark:text-white">AuthentiAi</span>
+            <span className="font-semibold text-gray-900 dark:text-white">Veridica</span>
           </button>
           <div className="lg:hidden">
             {isMobileMenuOpen ? <X size={24} className="text-gray-600 dark:text-gray-300" /> : <Menu size={24} className="text-gray-600 dark:text-gray-300" />}
@@ -76,7 +76,7 @@ const Dashboard = () => {
       >
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-center h-16 px-4 bg-indigo-600 dark:bg-indigo-700">
-            <h1 className="text-xl font-bold text-white">AuthentiAi</h1>
+            <h1 className="text-xl font-bold text-white">Veridica</h1>
           </div>
           <div className="flex-1 overflow-y-auto py-4 space-y-1">
             <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700">

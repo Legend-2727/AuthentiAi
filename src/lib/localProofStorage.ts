@@ -12,7 +12,7 @@ export interface LocalProof {
   explorerUrl: string;
 }
 
-const PROOFS_STORAGE_KEY = 'authenti_ai_proofs';
+const PROOFS_STORAGE_KEY = 'veridica_proofs';
 
 export class LocalProofStorage {
   static saveProof(proof: LocalProof): void {

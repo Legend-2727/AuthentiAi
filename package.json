@@ -1,7 +1,8 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "veridica",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Veridica - Blockchain-powered content authenticity verification platform",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -124,7 +124,7 @@ class AlgorandService {
         size: proof.fileSize,
         user: proof.userId,
         timestamp: new Date().toISOString(),
-        app: 'AuthentiAI'
+        app: 'Veridica'
       };
 
       // Convert proof data to note (max 1024 bytes)

@@ -1,16 +1,27 @@
-# AuthentiAi
+# Veridica
 
-A React-based application for creating authentic AI-generated videos and audio content using Tavus and ElevenLabs APIs.
+A blockchain-powered content authenticity verification platform built with React, featuring AI-generated video and audio content creation with Algorand blockchain protection.
 
-## Features
+## 🌟 Features
 
-- **AI Video Generation**: Create videos using personal or system replicas via Tavus API
-- **Audio Post Creation**: Generate AI voices using ElevenLabs API
-- **Video Upload**: Direct video upload functionality
-- **Social Feed**: Share and interact with community content
-- **User Authentication**: Secure user management with Supabase
+- **🔗 Blockchain Content Protection**: Automatic registration of all content on Algorand blockchain
+- **🎥 AI Video Generation**: Create videos using personal or system replicas via Tavus API  
+- **🎵 AI Audio Creation**: Generate AI voices using ElevenLabs API
+- **📁 Content Upload**: Direct video and audio upload with automatic blockchain registration
+- **🛡️ Ownership Verification**: Cryptographic proof of content ownership and authenticity
+- **🌐 Social Feed**: Share and interact with verified community content
+- **🔐 Secure Authentication**: User management with Supabase
+- **⚡ Deployment Ready**: Production-ready with blockchain-only mode option
 
-## Setup
+## 🔐 Blockchain Security
+
+Every piece of content uploaded or generated through Veridica is automatically:
+- **Hashed** using SHA-256 cryptographic algorithm
+- **Registered** on Algorand blockchain for immutable proof
+- **Verified** with transaction IDs and AlgoExplorer links
+- **Protected** against unauthorized duplication claims
+
+## 🚀 Quick Start
 
 1. **Install Dependencies**
    ```bash
@@ -25,9 +36,12 @@ A React-based application for creating authentic AI-generated videos and audio c
 
    Required environment variables:
    - `VITE_SUPABASE_URL`: Your Supabase project URL
-   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key  
+   - `VITE_ALGORAND_BACKEND_MNEMONIC`: 25-word Algorand account mnemonic
+   - `VITE_ALGORAND_API_TOKEN`: Nodely API token for Algorand access
    - `VITE_TAVUS_API_KEY`: Your Tavus API key for video generation
    - `VITE_ELEVENLABS_API_KEY`: Your ElevenLabs API key (optional, for audio)
+   - `VITE_DEPLOYMENT_MODE`: 'full' or 'blockchain-only' (for production without Supabase Pro)
 
 3. **Database Setup**
    Run the migrations in the `supabase/migrations/` folder in your Supabase dashboard.
