@@ -6,6 +6,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { initRevenueCat, getStarBalance, setStarBalance } from './lib/revenuecat';
 import VeridicalBadge from './components/VeridicalBadge';
 import MouseWaveEffect from './components/MouseWaveEffect';
+import TopBar from './components/TopBar';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
@@ -55,7 +56,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <VeridicalBadge />
+        <TopBar />
         <MouseWaveEffect />
         <Routes>
           <Route path="/login" element={<Login />} />

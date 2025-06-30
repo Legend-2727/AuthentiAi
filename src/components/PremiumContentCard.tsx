@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Star, Eye, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { getStarBalance, spendStar } from '../lib/revenuecat';
+import { getStarBalance, processStarTransaction } from '../lib/revenuecat';
 import BuyStarsModal from './BuyStarsModal';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PremiumContentCardProps {
   id: string;
@@ -28,11 +29,25 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
   creatorId,
   unlockPrice
 }) => {
+  const { user } = useAuth();
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
 
+  // Check if this content is already unlocked
+  useState(() => {
+    const unlockedContent = localStorage.getItem(`unlocked_content_${id}`);
+    if (unlockedContent === 'true') {
+      setIsUnlocked(true);
+    }
+  });
+
   const handleUnlock = async () => {
+    if (!user) {
+      toast.error('You must be logged in to unlock premium content');
+      return;
+    }
+    
     setIsUnlocking(true);
     
     try {
@@ -45,22 +60,24 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
         return;
       }
       
-      // Simulate backend transaction
-      // In a real app, this would be a call to your backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Process the transaction
+      const result = await processStarTransaction(
+        user.id,
+        creatorId,
+        unlockPrice,
+        id,
+        contentType,
+        `Premium content unlock: ${title}`
+      );
       
-      // Spend stars
-      for (let i = 0; i < unlockPrice; i++) {
-        spendStar();
+      if (result.success) {
+        // Mark as unlocked
+        setIsUnlocked(true);
+        localStorage.setItem(`unlocked_content_${id}`, 'true');
+        toast.success(`Content unlocked! ${unlockPrice} stars sent to ${creatorName}.`);
+      } else {
+        toast.error(result.error || 'Failed to unlock content');
       }
-      
-      // Mark as unlocked
-      setIsUnlocked(true);
-      toast.success(`Content unlocked! ${unlockPrice} stars sent to ${creatorName}.`);
-      
-      // In a real app, you would also record this transaction in your database
-      console.log(`Transaction: ${unlockPrice} stars from user to ${creatorId} for content ${id}`);
-      
     } catch (error) {
       console.error('Error unlocking content:', error);
       toast.error('Failed to unlock content. Please try again.');
@@ -78,7 +95,7 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
     >
       {/* Content Preview */}
       <div className="relative">
-        <div className={`aspect-video bg-gray-200 dark:bg-gray-700 ${!isUnlocked ? 'filter blur-md' : ''}`}>
+        <div className={`aspect-video bg-gray-200 dark:bg-gray-700 ${!isUnlocked ? 'premium-blur premium-shimmer' : ''}`}>
           <img 
             src={thumbnailUrl || 'https://images.pexels.com/photos/2156881/pexels-photo-2156881.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
             alt={title}
@@ -138,14 +155,6 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
                 title="View content"
               >
                 <Eye className="h-4 w-4" />
-              </a>
-              <a
-                href={contentUrl}
-                download
-                className="p-2 text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors"
-                title="Download content"
-              >
-                <Download className="h-4 w-4" />
               </a>
             </div>
           )}

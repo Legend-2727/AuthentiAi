@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, 
@@ -55,7 +55,7 @@ const FeedPost = ({
   const [viewCount, setViewCount] = useState(post.view_count || 0);
 
   // Increment view count when post is rendered
-  useState(() => {
+  useEffect(() => {
     // Update local view count
     setViewCount(prevCount => prevCount + 1);
     

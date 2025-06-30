@@ -106,24 +106,54 @@ const Login = () => {
       </div>
 
       {/* Left Panel - Feature Showcase */}
-      <div className="hidden md:flex md:w-1/2 p-8 items-center justify-center relative">
+      <motion.div 
+        className="hidden md:flex md:w-1/2 p-8 items-center justify-center relative"
+        initial={{ opacity: 0, x: -100 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
         <div className="max-w-md w-full">
-          <div className="mb-12">
+          <motion.div 
+            className="mb-12"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
             <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-indigo-600/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-indigo-500/30 shadow-lg mr-4">
+              <motion.div 
+                className="w-12 h-12 bg-indigo-600/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-indigo-500/30 shadow-lg mr-4"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
                 <BlockchainShieldLogo isDark={true} />
-              </div>
-              <h2 className="text-3xl font-bold text-white">
+              </motion.div>
+              <motion.h2 
+                className="text-3xl font-bold text-white"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+              >
                 <span className="font-['Abril_Fatface',_cursive] italic cursive-flow">Veridica</span>
-              </h2>
+              </motion.h2>
             </div>
-            <p className="text-indigo-200 text-lg">
+            <motion.p 
+              className="text-indigo-200 text-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+            >
               Secure your creative work with immutable proof of ownership on the Algorand blockchain.
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
 
           {/* Feature Carousel */}
-          <div className="bg-indigo-900/30 backdrop-blur-sm border border-indigo-700/30 rounded-2xl p-8 shadow-xl h-80 relative overflow-hidden">
+          <motion.div 
+            className="bg-indigo-900/30 backdrop-blur-sm border border-indigo-700/30 rounded-2xl p-8 shadow-xl h-80 relative overflow-hidden"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1 }}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentFeature}
@@ -160,9 +190,9 @@ const Login = () => {
                 />
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Center Brand Section (Mobile Only) */}
       <div className="md:hidden pt-16 pb-8 px-6 text-center">
@@ -170,18 +200,40 @@ const Login = () => {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12">
+      <motion.div 
+        className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12"
+        initial={{ opacity: 0, x: 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
         <div className="w-full max-w-md">
           {/* Brand Section (Desktop Only) */}
           <div className="hidden md:block mb-12">
             <BrandSection />
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/20">
-            <h2 className="text-2xl font-bold text-white mb-6">Sign In</h2>
+          <motion.div 
+            className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/20"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <motion.h2 
+              className="text-2xl font-bold text-white mb-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              Sign In
+            </motion.h2>
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-4">
+              <motion.div 
+                className="space-y-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.8 }}
+              >
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-300 h-5 w-5" />
                   <input
@@ -215,9 +267,14 @@ const Login = () => {
                     <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
                   )}
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="flex items-center justify-between">
+              <motion.div 
+                className="flex items-center justify-between"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 1 }}
+              >
                 <div className="flex items-center">
                   <input
                     id="remember-me"
@@ -235,7 +292,7 @@ const Login = () => {
                     Forgot password?
                   </Link>
                 </div>
-              </div>
+              </motion.div>
 
               <motion.button
                 type="submit"
@@ -243,6 +300,9 @@ const Login = () => {
                 disabled={isLoading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 1.2 }}
               >
                 {isLoading ? (
                   <>
@@ -261,7 +321,12 @@ const Login = () => {
               </motion.button>
 
               {/* Social Login Options */}
-              <div className="mt-6">
+              <motion.div 
+                className="mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 1.4 }}
+              >
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-indigo-700"></div>
@@ -287,20 +352,25 @@ const Login = () => {
                     Twitter
                   </button>
                 </div>
-              </div>
+              </motion.div>
             </form>
 
-            <div className="mt-8 text-center">
+            <motion.div 
+              className="mt-8 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.6 }}
+            >
               <p className="text-sm text-indigo-300">
                 Don't have an account?{' '}
                 <Link to="/signup" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
                   Sign up
                 </Link>
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -315,14 +385,24 @@ const BrandSection = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <div className="w-20 h-20 bg-indigo-600/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-indigo-500/30 shadow-lg mb-6">
+        <motion.div 
+          className="w-20 h-20 bg-indigo-600/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-indigo-500/30 shadow-lg mb-6"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
           <BlockchainShieldLogo isDark={true} />
-        </div>
+        </motion.div>
         
         <div className="relative">
-          <h1 className="text-5xl md:text-6xl font-['Abril_Fatface',_cursive] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 tracking-wide relative z-10 cursive-flow">
+          <motion.h1 
+            className="text-5xl md:text-6xl font-['Abril_Fatface',_cursive] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 tracking-wide relative z-10 cursive-flow"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
             Veridica
-          </h1>
+          </motion.h1>
           
           {/* Animated Wave Effect */}
           <div className="absolute inset-0 overflow-hidden">
@@ -340,9 +420,14 @@ const BrandSection = () => {
           <div className="absolute inset-0 blur-md opacity-30 bg-indigo-400 rounded-full" />
         </div>
         
-        <p className="text-indigo-300 mt-4 text-lg">
+        <motion.p 
+          className="text-indigo-300 mt-4 text-lg"
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
           Blockchain Content Authenticity
-        </p>
+        </motion.p>
       </motion.div>
     </div>
   );
