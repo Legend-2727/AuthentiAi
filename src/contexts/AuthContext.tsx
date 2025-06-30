@@ -37,20 +37,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const fetchSession = async () => {
       setLoading(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
+        const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
         
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          (_event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
+        if (deploymentMode === 'blockchain-only') {
+          // Check localStorage for mock session
+          const storedUser = localStorage.getItem('veridica_user');
+          const storedSession = localStorage.getItem('veridica_session');
+          
+          if (storedUser && storedSession) {
+            const user = JSON.parse(storedUser);
+            const session = JSON.parse(storedSession);
+            
+            // Check if session is still valid (7 days)
+            if (session.expires_at > Date.now()) {
+              setUser(user);
+              setSession(session);
+            } else {
+              // Session expired, clear storage
+              localStorage.removeItem('veridica_user');
+              localStorage.removeItem('veridica_session');
+            }
           }
-        );
-        
-        // Cleanup subscription
-        return () => subscription.unsubscribe();
+        } else {
+          // Full mode - use Supabase
+          const { data: { session } } = await supabase.auth.getSession();
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Listen for auth changes
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            (_event, session) => {
+              setSession(session);
+              setUser(session?.user ?? null);
+            }
+          );
+          
+          // Cleanup subscription
+          return () => subscription.unsubscribe();
+        }
       } catch (error) {
         console.error('Error checking auth session:', error);
       } finally {
@@ -94,42 +118,95 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
+    const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
+    
+    if (deploymentMode === 'blockchain-only') {
+      // In blockchain-only mode, create a mock user that works with the UI
+      try {
+        // Create a fake but functional user object
+        const mockUser = {
+          id: crypto.randomUUID(),
+          email,
+          user_metadata: {
             username,
+            display_name: username
           },
-        },
-      });
-
-      if (!error && data.user) {
-        // Create a user profile in the users table
-        const { error: profileError } = await supabase.from('users').insert([
-          {
-            id: data.user.id,
-            username,
-            email,
-          },
-        ]);
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Return the auth data even if profile creation fails
-          // The user can still use the app with auth.users data
-        }
+          created_at: new Date().toISOString(),
+          aud: 'authenticated',
+          role: 'authenticated'
+        };
+        
+        // Store in localStorage to persist across sessions
+        localStorage.setItem('veridica_user', JSON.stringify(mockUser));
+        localStorage.setItem('veridica_session', JSON.stringify({
+          user: mockUser,
+          access_token: 'mock_token_' + Date.now(),
+          expires_at: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+        }));
+        
+        // Set the user immediately
+        setUser(mockUser as any);
+        setSession({
+          user: mockUser,
+          access_token: 'mock_token_' + Date.now(),
+          expires_at: Date.now() + (7 * 24 * 60 * 60 * 1000)
+        } as any);
+        
+        return { 
+          data: { user: mockUser, session: null }, 
+          error: null 
+        };
+      } catch (error) {
+        return { error: error as Error, data: null };
       }
+    } else {
+      // Full mode - use Supabase (requires Pro plan)
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              username,
+            },
+          },
+        });
 
-      return { data, error };
-    } catch (error) {
-      return { error: error as Error, data: null };
+        if (!error && data.user) {
+          // Create a user profile in the users table
+          const { error: profileError } = await supabase.from('users').insert([
+            {
+              id: data.user.id,
+              username,
+              email,
+            },
+          ]);
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+          }
+        }
+
+        return { data, error };
+      } catch (error) {
+        return { error: error as Error, data: null };
+      }
     }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
+    
+    if (deploymentMode === 'blockchain-only') {
+      // Clear localStorage and state
+      localStorage.removeItem('veridica_user');
+      localStorage.removeItem('veridica_session');
+      setUser(null);
+      setSession(null);
+    } else {
+      // Full mode - use Supabase
+      await supabase.auth.signOut();
+    }
   };
 
   const resetPassword = async (email: string) => {
