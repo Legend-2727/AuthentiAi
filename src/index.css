@@ -60,3 +60,21 @@
     filter: blur(10px) brightness(1.2);
   }
 }
+
+/* Cursive text animation */
+@keyframes cursiveFlow {
+  0% {
+    transform: skewX(-5deg);
+  }
+  50% {
+    transform: skewX(5deg);
+  }
+  100% {
+    transform: skewX(-5deg);
+  }
+}
+
+.cursive-flow {
+  animation: cursiveFlow 8s ease-in-out infinite;
+  display: inline-block;
+}

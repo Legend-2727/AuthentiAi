@@ -21,12 +21,11 @@ function App() {
     // Check if user is already authenticated and initialize RevenueCat
     const checkAuth = async () => {
       try {
+        setLoading(true);
         const { data } = await supabase.auth.getSession();
         
-        // Initialize RevenueCat with user ID if authenticated
-        const userId = data.session?.user?.id || null;
-        
         // Initialize RevenueCat (this will gracefully handle failures now)
+        const userId = data.session?.user?.id || null;
         try {
           await initRevenueCat(userId);
         } catch (error) {

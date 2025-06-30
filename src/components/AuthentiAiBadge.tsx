@@ -25,7 +25,7 @@ const VeridicalBadge: React.FC<VeridicalBadgeProps> = ({
   );
 };
 
-// New blockchain shield logo component
+// Custom blockchain shield logo component with cursive X
 const BlockchainShieldLogo: React.FC<{ isDark: boolean }> = ({ isDark }) => {
   const mainColor = isDark ? '#fff' : '#000';
   const accentColor = isDark ? '#818cf8' : '#4f46e5';
@@ -54,6 +54,22 @@ const BlockchainShieldLogo: React.FC<{ isDark: boolean }> = ({ isDark }) => {
       <line x1="14" y1="28" x2="20" y2="22" stroke={accentColor} strokeWidth="1" />
       <line x1="20" y1="22" x2="26" y2="28" stroke={accentColor} strokeWidth="1" />
       <line x1="14" y1="28" x2="26" y2="28" stroke={accentColor} strokeWidth="1" />
+      
+      {/* Cursive X in the center */}
+      <path 
+        d="M17 19C18 20 19 21 20 22C21 21 22 20 23 19" 
+        stroke={mainColor} 
+        strokeWidth="1.5" 
+        strokeLinecap="round" 
+        fill="none"
+      />
+      <path 
+        d="M23 25C22 24 21 23 20 22C19 23 18 24 17 25" 
+        stroke={mainColor} 
+        strokeWidth="1.5" 
+        strokeLinecap="round" 
+        fill="none"
+      />
     </svg>
   );
 };

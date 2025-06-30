@@ -87,7 +87,7 @@ const SocialFeed = () => {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Creator Feed</h1>
+          <h1 className="text-3xl font-['Abril_Fatface',_cursive] italic text-gray-900 dark:text-white">Creator Feed</h1>
           <div className="flex items-center space-x-2">
             <Filter className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             <span className="text-sm text-gray-500 dark:text-gray-400">Filters:</span>

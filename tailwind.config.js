@@ -71,6 +71,7 @@ export default {
         'wave': 'waveAnimation 3s linear infinite',
         'float': 'float 6s ease-in-out infinite',
         'glow': 'glow 3s ease-in-out infinite',
+        'cursive-flow': 'cursiveFlow 8s ease-in-out infinite',
       },
     },
   },
