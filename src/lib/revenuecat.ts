@@ -75,6 +75,7 @@ interface RevenueCatPackage {
 let isConfigured = false;
 let rcInstance: RevenueCatInstance | null = null;
 let scriptLoadFailed = false;
+let scriptLoadAttempted = false;
 
 export const debugRevenueCat = () => {
   const apiKey = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY;
@@ -85,6 +86,7 @@ export const debugRevenueCat = () => {
   console.log('DEBUG - isConfigured:', isConfigured);
   console.log('DEBUG - rcInstance:', !!rcInstance);
   console.log('DEBUG - scriptLoadFailed:', scriptLoadFailed);
+  console.log('DEBUG - scriptLoadAttempted:', scriptLoadAttempted);
   console.log('DEBUG - Window RCPurchases:', !!window.RCPurchases);
   console.log('DEBUG - All env vars:', import.meta.env);
   
@@ -92,11 +94,20 @@ export const debugRevenueCat = () => {
   console.log('DEBUG - Is production key?:', apiKey === 'rcb_nxFaEtdIxcXFtxLKnIAUHGfwVyOq');
   console.log('DEBUG - Is sandbox key?:', apiKey === 'rcb_sb_tnaXRWTYEDSfqrrioYhfzRKVU');
   
-  return { apiKey, isConfigured, hasInstance: !!rcInstance, scriptLoadFailed };
+  return { apiKey, isConfigured, hasInstance: !!rcInstance, scriptLoadFailed, scriptLoadAttempted };
 };
 
 export const initRevenueCat = async (userId: string | null = null) => {
-  if (isConfigured || scriptLoadFailed) return;
+  // Don't attempt multiple times if already failed
+  if (scriptLoadFailed) {
+    console.log('RevenueCat script loading previously failed, using mock system');
+    return;
+  }
+
+  if (isConfigured) {
+    console.log('RevenueCat already configured');
+    return;
+  }
 
   try {
     const apiKey = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY;
@@ -105,6 +116,7 @@ export const initRevenueCat = async (userId: string | null = null) => {
     if (!apiKey || apiKey === 'your_revenuecat_web_api_key_here' || apiKey === 'your_actual_revenuecat_web_api_key_here') {
       console.warn('RevenueCat API key not configured. Star purchases will use mock system.');
       console.warn('Current API key value:', apiKey);
+      scriptLoadFailed = true;
       return;
     }
 
@@ -112,7 +124,7 @@ export const initRevenueCat = async (userId: string | null = null) => {
 
     console.log('Loading RevenueCat Web SDK...');
     // Load RevenueCat Web SDK script if not already loaded
-    if (!window.RCPurchases) {
+    if (!window.RCPurchases && !scriptLoadAttempted) {
       try {
         await loadRevenueCatScript();
       } catch (error) {
@@ -120,6 +132,12 @@ export const initRevenueCat = async (userId: string | null = null) => {
         scriptLoadFailed = true;
         return;
       }
+    }
+
+    // If script loading was attempted but failed, don't try to configure
+    if (scriptLoadFailed || !window.RCPurchases) {
+      console.warn('RevenueCat not available, using mock system');
+      return;
     }
 
     console.log('Configuring RevenueCat with API key:', apiKey.substring(0, 10) + '...');
@@ -148,6 +166,8 @@ export const initRevenueCat = async (userId: string | null = null) => {
 
 const loadRevenueCatScript = (): Promise<void> => {
   return new Promise((resolve, reject) => {
+    scriptLoadAttempted = true;
+
     if (window.RCPurchases) {
       console.log('RevenueCat script already loaded');
       resolve();
@@ -158,13 +178,15 @@ const loadRevenueCatScript = (): Promise<void> => {
     const script = document.createElement('script');
     script.src = 'https://js.revenuecat.com/revenuecat-web-js/1.7.0/revenuecat-web-js.min.js';
     script.async = true;
+    script.crossOrigin = 'anonymous';
     
     // Set a timeout to prevent hanging
     const timeout = setTimeout(() => {
-      console.error('RevenueCat script load timeout');
+      console.warn('RevenueCat script load timeout - this may be due to network issues, ad blockers, or CDN unavailability');
       script.remove();
+      scriptLoadFailed = true;
       reject(new Error('Script load timeout'));
-    }, 10000); // 10 second timeout
+    }, 15000); // 15 second timeout
 
     script.onload = () => {
       clearTimeout(timeout);
@@ -175,7 +197,8 @@ const loadRevenueCatScript = (): Promise<void> => {
           console.log('RCPurchases is available');
           resolve();
         } else {
-          console.error('RCPurchases not available after script load');
+          console.warn('RCPurchases not available after script load, falling back to mock system');
+          scriptLoadFailed = true;
           reject(new Error('RCPurchases not available after script load'));
         }
       }, 100);
@@ -183,12 +206,23 @@ const loadRevenueCatScript = (): Promise<void> => {
     
     script.onerror = (error) => {
       clearTimeout(timeout);
-      console.error('Failed to load RevenueCat script:', error);
+      console.warn('Failed to load RevenueCat script - this may be due to network issues, ad blockers, or CDN unavailability. Falling back to mock system.');
+      console.warn('Error details:', error);
       script.remove();
-      reject(new Error('Failed to load RevenueCat script - this may be due to network issues, ad blockers, or CDN unavailability'));
+      scriptLoadFailed = true;
+      // Don't throw error, just mark as failed and continue with mock system
+      reject(new Error('Failed to load RevenueCat script'));
     };
     
-    document.head.appendChild(script);
+    // Add the script to head
+    try {
+      document.head.appendChild(script);
+    } catch (error) {
+      clearTimeout(timeout);
+      console.warn('Failed to append RevenueCat script to document head:', error);
+      scriptLoadFailed = true;
+      reject(error);
+    }
   });
 };
 
