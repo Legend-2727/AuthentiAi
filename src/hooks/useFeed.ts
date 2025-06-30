@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FeedPost, PostStats, SortOption } from '../types/feed';
+import { supabase } from '../lib/supabase';
 
 // Hook for managing social feed posts
 
@@ -34,7 +35,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=1',
         duration: 180,
         tags: ['AI', 'Voice-Cloning', 'Technology', 'Innovation', 'Neural-Networks'],
-        view_count: 15240,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -57,7 +58,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=2',
         duration: 420,
         tags: ['Podcast', 'Tech', 'News', 'AI', 'Machine-Learning'],
-        view_count: 8560,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -80,7 +81,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=3',
         duration: 900,
         tags: ['Voice-Acting', 'Education', 'Tutorial', 'Entertainment', 'Professional'],
-        view_count: 21800,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -103,7 +104,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=4',
         duration: 600,
         tags: ['Music', 'AI-Generated', 'Ambient', 'Relaxation', 'Study'],
-        view_count: 9240,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -126,7 +127,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=5',
         duration: 720,
         tags: ['Science', 'Linguistics', 'Speech-Synthesis', 'Education', 'Research'],
-        view_count: 6450,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -149,7 +150,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=6',
         duration: 480,
         tags: ['Gaming', 'AI', 'Voice-Modulation', 'Streaming', 'Real-Time'],
-        view_count: 18900,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -172,7 +173,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=7',
         duration: 540,
         tags: ['Business', 'Communication', 'AI', 'Corporate', 'Training'],
-        view_count: 7320,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -195,7 +196,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=8',
         duration: 780,
         tags: ['Audiobook', 'Narration', 'AI', 'Literature', 'Demo'],
-        view_count: 5680,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 16 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -218,7 +219,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=9',
         duration: 660,
         tags: ['Education', 'Languages', 'Multilingual', 'Pronunciation', 'Learning'],
-        view_count: 11200,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -241,7 +242,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         thumbnail_url: 'https://picsum.photos/400/300?random=10',
         duration: 420,
         tags: ['Accessibility', 'Inclusion', 'AI', 'Assistive-Technology', 'Social-Impact'],
-        view_count: 8900,
+        view_count: 0, // Start with 0 views
         created_at: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       }
@@ -268,14 +269,14 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
     // Generate new stats
     const stats: PostStats = {
       reaction_counts: {
-        '❤️': Math.floor(Math.random() * 25) + 5,
-        '👏': Math.floor(Math.random() * 15) + 2,
-        '🔥': Math.floor(Math.random() * 12) + 1,
-        '🎵': Math.floor(Math.random() * 8) + 1,
+        '❤️': 0,
+        '👏': 0,
+        '🔥': 0,
+        '🎵': 0,
       },
-      comment_count: Math.floor(Math.random() * 30) + 3,
-      star_count: Math.floor(Math.random() * 50) + 10,
-      star_value: (Math.floor(Math.random() * 50) + 10) * 0.01,
+      comment_count: 0,
+      star_count: 0,
+      star_value: 0,
       user_reaction: userReaction || undefined
     };
 
@@ -286,53 +287,154 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const mockPosts = generateMockPosts();
-    
-    // Filter posts by tags if search tags are provided
-    let filteredPosts = mockPosts;
-    if (searchTags.length > 0) {
-      filteredPosts = mockPosts.filter(post => 
-        searchTags.some(searchTag => 
-          post.tags.some(postTag => 
-            postTag.toLowerCase().includes(searchTag.toLowerCase())
-          )
-        )
-      );
-    }
-    
-    // Apply sorting
-    const sortedPosts = [...filteredPosts].sort((a, b) => {
-      switch (sortBy) {
-        case 'recent':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'popular':
-          return b.view_count - a.view_count;
-        case 'trending': {
-          // Simple trending: recent posts with high views
-          const aScore = a.view_count / (Date.now() - new Date(a.created_at).getTime());
-          const bScore = b.view_count / (Date.now() - new Date(b.created_at).getTime());
-          return bScore - aScore;
+    try {
+      // Try to fetch real posts from database first
+      const { data: realPosts, error } = await supabase
+        .from('feed_posts')
+        .select(`
+          *,
+          creator:creator_id(*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.warn('Error fetching posts from database, using mock data:', error);
+        // Fall back to mock data
+        const mockPosts = generateMockPosts();
+        
+        // Filter posts by tags if search tags are provided
+        let filteredPosts = mockPosts;
+        if (searchTags.length > 0) {
+          filteredPosts = mockPosts.filter(post => 
+            searchTags.some(searchTag => 
+              post.tags.some(postTag => 
+                postTag.toLowerCase().includes(searchTag.toLowerCase())
+              )
+            )
+          );
         }
-        case 'following':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        default:
-          return 0;
+        
+        // Apply sorting
+        const sortedPosts = [...filteredPosts].sort((a, b) => {
+          switch (sortBy) {
+            case 'recent':
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            case 'popular':
+              return b.view_count - a.view_count;
+            case 'trending': {
+              // Simple trending: recent posts with high views
+              const aScore = a.view_count / (Date.now() - new Date(a.created_at).getTime());
+              const bScore = b.view_count / (Date.now() - new Date(b.created_at).getTime());
+              return bScore - aScore;
+            }
+            case 'following':
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            default:
+              return 0;
+          }
+        });
+
+        setPosts(sortedPosts);
+
+        // Generate stats for each post
+        const statsMap = sortedPosts.reduce((acc, post) => {
+          acc[post.id] = generatePostStats(post.id);
+          return acc;
+        }, {} as { [postId: string]: PostStats });
+
+        setPostStats(statsMap);
+        
+        // Increment view count for each post
+        sortedPosts.forEach(post => {
+          // Update view count in localStorage
+          const viewCountKey = `view_count_${post.id}`;
+          const currentViews = parseInt(localStorage.getItem(viewCountKey) || '0', 10);
+          localStorage.setItem(viewCountKey, (currentViews + 1).toString());
+          
+          // Update post object
+          post.view_count = currentViews + 1;
+        });
+        
+        return;
       }
-    });
+      
+      // If we have real posts, use them
+      console.log('Fetched real posts from database:', realPosts);
+      
+      // Filter posts by tags if search tags are provided
+      let filteredPosts = realPosts || [];
+      if (searchTags.length > 0) {
+        filteredPosts = filteredPosts.filter(post => 
+          searchTags.some(searchTag => 
+            post.tags.some((postTag: string) => 
+              postTag.toLowerCase().includes(searchTag.toLowerCase())
+            )
+          )
+        );
+      }
+      
+      // Apply sorting
+      const sortedPosts = [...filteredPosts].sort((a, b) => {
+        switch (sortBy) {
+          case 'recent':
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          case 'popular':
+            return b.view_count - a.view_count;
+          case 'trending': {
+            // Simple trending: recent posts with high views
+            const aScore = a.view_count / (Date.now() - new Date(a.created_at).getTime());
+            const bScore = b.view_count / (Date.now() - new Date(b.created_at).getTime());
+            return bScore - aScore;
+          }
+          case 'following':
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          default:
+            return 0;
+        }
+      });
 
-    setPosts(sortedPosts);
+      setPosts(sortedPosts);
 
-    // Generate stats for each post
-    const statsMap = sortedPosts.reduce((acc, post) => {
-      acc[post.id] = generatePostStats(post.id);
-      return acc;
-    }, {} as { [postId: string]: PostStats });
+      // Generate stats for each post
+      const statsMap = sortedPosts.reduce((acc, post) => {
+        acc[post.id] = generatePostStats(post.id);
+        return acc;
+      }, {} as { [postId: string]: PostStats });
 
-    setPostStats(statsMap);
-    setLoading(false);
+      setPostStats(statsMap);
+      
+      // Increment view count for each post
+      sortedPosts.forEach(async post => {
+        try {
+          // Update view count in database
+          await supabase
+            .from('feed_posts')
+            .update({ view_count: post.view_count + 1 })
+            .eq('id', post.id);
+            
+          // Update post object
+          post.view_count += 1;
+        } catch (error) {
+          console.error('Error updating view count:', error);
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      // Fall back to mock data
+      const mockPosts = generateMockPosts();
+      setPosts(mockPosts);
+      
+      // Generate stats for each post
+      const statsMap = mockPosts.reduce((acc, post) => {
+        acc[post.id] = generatePostStats(post.id);
+        return acc;
+      }, {} as { [postId: string]: PostStats });
+
+      setPostStats(statsMap);
+    } finally {
+      setLoading(false);
+    }
   }, [sortBy, searchTags, generatePostStats]);
 
   useEffect(() => {
@@ -399,10 +501,51 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         [postId]: newStats
       };
     });
+    
+    // Try to update reactions in the database
+    try {
+      const { data: existingReaction, error: checkError } = await supabase
+        .from('reactions')
+        .select('*')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .single();
+        
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.warn('Error checking for existing reaction:', checkError);
+        return;
+      }
+      
+      if (existingReaction) {
+        if (existingReaction.type === reactionType) {
+          // Remove reaction if it's the same
+          await supabase
+            .from('reactions')
+            .delete()
+            .eq('id', existingReaction.id);
+        } else {
+          // Update reaction if it's different
+          await supabase
+            .from('reactions')
+            .update({ type: reactionType })
+            .eq('id', existingReaction.id);
+        }
+      } else {
+        // Add new reaction
+        await supabase
+          .from('reactions')
+          .insert({
+            post_id: postId,
+            user_id: user.id,
+            type: reactionType
+          });
+      }
+    } catch (error) {
+      console.error('Error updating reaction in database:', error);
+    }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const sendStarDonation = async (postId: string, starCount: number, _message?: string) => {
+  const sendStarDonation = async (postId: string, starCount: number, message?: string) => {
     if (!user) return;
 
     // Update star count in stats
@@ -425,6 +568,30 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         [postId]: newStats
       };
     });
+    
+    // Try to update star donations in the database
+    try {
+      // Find the post to get creator ID
+      const post = posts.find(p => p.id === postId);
+      if (!post) {
+        console.error('Post not found for star donation');
+        return;
+      }
+      
+      // Create star donation record
+      await supabase
+        .from('star_donations')
+        .insert({
+          post_id: postId,
+          from_user_id: user.id,
+          to_user_id: post.creator.id,
+          star_count: starCount,
+          message: message
+        });
+        
+    } catch (error) {
+      console.error('Error recording star donation in database:', error);
+    }
   };
 
   return {

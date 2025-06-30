@@ -357,6 +357,7 @@ const FeedPost = ({
           <GiveStarButton 
             creatorId={post.creator.id}
             contentId={post.id}
+            contentType={post.type}
             onStarGiven={(success) => {
               if (success) {
                 if (isShared && originalCreator) {

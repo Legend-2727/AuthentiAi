@@ -13,5 +13,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // The app will show appropriate error messages for missing functionality
 export const supabase = createClient<Database>(
   supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder-key'
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      persistSession: true, // Enable persistent sessions
+      autoRefreshToken: true, // Enable automatic token refresh
+      detectSessionInUrl: true, // Look for auth tokens in URL
+      storage: localStorage // Use localStorage for session storage
+    }
+  }
 );

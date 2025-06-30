@@ -57,6 +57,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchSession();
   }, []);
 
+  // Set up a session refresh interval to prevent logout on page refresh
+  useEffect(() => {
+    // Refresh session every 10 minutes to keep it active
+    const refreshInterval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.warn('Session refresh failed:', error);
+        } else if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
+      } catch (err) {
+        console.error('Error refreshing session:', err);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+    
+    return () => clearInterval(refreshInterval);
+  }, []);
+
   const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
