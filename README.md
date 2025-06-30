@@ -29,73 +29,80 @@ Every piece of content uploaded or generated through Veridica is automatically:
    ```
 
 2. **Environment Configuration**
-   Copy `.env.example` to `.env` and fill in your API keys:
+   Copy `.env.example` to `.env` and configure your settings:
    ```bash
    cp .env.example .env
    ```
 
-   Required environment variables:
-   - `VITE_SUPABASE_URL`: Your Supabase project URL
-   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key  
-   - `VITE_ALGORAND_BACKEND_MNEMONIC`: 25-word Algorand account mnemonic
-   - `VITE_ALGORAND_API_TOKEN`: Nodely API token for Algorand access
-   - `VITE_TAVUS_API_KEY`: Your Tavus API key for video generation
-   - `VITE_ELEVENLABS_API_KEY`: Your ElevenLabs API key (optional, for audio)
-   - `VITE_DEPLOYMENT_MODE`: 'full' or 'blockchain-only' (for production without Supabase Pro)
+3. **Blockchain Setup** (Required)
+   - Get Algorand testnet account: https://bank.testnet.algorand.network/
+   - Get Nodely API token: Contact support@nodely.io
+   - Add your 25-word mnemonic and API token to `.env`
 
-3. **Database Setup**
-   Run the migrations in the `supabase/migrations/` folder in your Supabase dashboard.
-
-4. **Start Development Server**
+4. **Start Development**
    ```bash
    npm run dev
    ```
 
-## Video Creation Flow Testing
+## 🌍 Deployment Options
 
-### Test Cases to Verify:
+### Option 1: Full Database Mode (Recommended)
+- Requires Supabase Pro ($25/month)
+- Complete ownership verification
+- Cross-user duplicate detection
 
-1. **Personal Replica Creation**
-   - Navigate to Create Video → Personal Replica
-   - Verify user replicas load from Tavus API
-   - Test creating new personal replica (if you have training footage)
-   - Verify replica selection and video generation
+### Option 2: Blockchain-Only Mode (Budget-Friendly)
+- Zero additional costs
+- Core blockchain protection active
+- Limited cross-user features
 
-2. **Stock Replica Usage**
-   - Navigate to Create Video → Stock Replica
-   - Verify system replicas load from Tavus API
-   - Test selecting a system replica
-   - Verify video generation with script input
+Set in `.env`:
+```bash
+VITE_DEPLOYMENT_MODE=blockchain-only  # or 'full'
+```
 
-3. **Video Upload**
-   - Navigate to Create Video → Upload Video
-   - Test file upload functionality (MP4, MOV, AVI)
-   - Verify file size validation (100MB limit)
-   - Confirm video saves to Supabase storage
+## 🛠️ Technologies
 
-4. **Database Integration**
-   - Verify video records save correctly with all fields
-   - Check status tracking: processing → generating → completed
-   - Confirm replica information is stored correctly
+- **Frontend**: React 18 + TypeScript + Vite
+- **Blockchain**: Algorand (via algosdk + Nodely API)
+- **Database**: Supabase (PostgreSQL)
+- **AI Services**: Tavus (video) + ElevenLabs (audio)
+- **Styling**: TailwindCSS + Framer Motion
+- **Authentication**: Supabase Auth
 
-5. **Error Handling**
-   - Test with invalid API keys
-   - Test with no replicas available
-   - Test with invalid file uploads
-   - Verify graceful error messages
+## 📚 Documentation
 
-### Key Bug Fixes Applied:
+- [🔗 Blockchain Setup Guide](ALGORAND_SETUP_GUIDE.md)
+- [🗄️ Database Setup](SUPABASE_SETUP_GUIDE.md)
+- [🚀 Production Deployment](PRODUCTION_DEPLOYMENT_GUIDE.md)
+- [🛡️ Ownership Verification](OWNERSHIP_VERIFICATION_GUIDE.md)
 
-- Fixed database schema mismatch (updated TypeScript types)
-- Removed fake STOCK_REPLICAS, now loads real system replicas
-- Added proper video generation status polling
-- Improved error handling and user feedback
-- Fixed Tavus API integration for replica loading
-- Added comprehensive validation for replica selection
+## 🧪 Production Readiness
 
-## Troubleshooting
+Check deployment readiness:
+```bash
+npm run build:check
+```
 
-- Ensure all environment variables are set correctly
-- Check Supabase database migrations are applied
-- Verify API keys have proper permissions
-- Check browser console for detailed error messages
+Build for production:
+```bash
+npm run build
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+- 📧 Email: support@veridica.app
+- 🐛 Issues: [GitHub Issues](https://github.com/Legend-2727/AuthentiAi/issues)
+- 📖 Docs: [Documentation](README.md)
