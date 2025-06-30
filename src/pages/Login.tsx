@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { Shield, Lock, Mail, ChevronRight, Github, Twitter } from 'lucide-react';
+import { Shield, Lock, Mail, ChevronRight, Github, Twitter, Mic, Video, Star, CreditCard } from 'lucide-react';
 import FormInput from '../components/FormInput';
 
 interface LoginFormValues {
@@ -15,35 +15,29 @@ interface LoginFormValues {
 // Features for the carousel
 const features = [
   {
-    title: "Your Content Remains Yours",
-    description: "Blockchain-verified ownership protects your creative rights",
+    title: "Blockchain Content Protection",
+    description: "Immutable proof of ownership on Algorand blockchain",
     icon: <Shield className="h-8 w-8 text-indigo-400" />
   },
   {
-    title: "Create AI-Powered Videos",
+    title: "AI-Powered Video Creation",
     description: "Generate professional videos with Tavus AI technology",
-    icon: <motion.div className="h-8 w-8 text-indigo-400 flex items-center justify-center">
-      <span className="text-lg font-bold">Ai</span>
-    </motion.div>
+    icon: <Video className="h-8 w-8 text-indigo-400" />
   },
   {
-    title: "Choose from Stock Replicas",
-    description: "Use pre-made templates or create your own personalized content",
-    icon: <motion.div className="h-8 w-8 text-indigo-400 flex items-center justify-center">
-      <span className="text-lg font-bold">🎬</span>
-    </motion.div>
+    title: "ElevenLabs Voice Synthesis",
+    description: "Create natural-sounding audio content with AI voices",
+    icon: <Mic className="h-8 w-8 text-indigo-400" />
   },
   {
-    title: "Blockchain Authentication",
-    description: "Immutable proof of ownership on Algorand blockchain",
-    icon: <Lock className="h-8 w-8 text-indigo-400" />
+    title: "Star Tipping System",
+    description: "Support creators with integrated payment system",
+    icon: <Star className="h-8 w-8 text-indigo-400" />
   },
   {
-    title: "Support Creators with Stars",
-    description: "Reward great content with our integrated tipping system",
-    icon: <motion.div className="h-8 w-8 text-indigo-400 flex items-center justify-center">
-      <span className="text-lg font-bold">⭐</span>
-    </motion.div>
+    title: "Premium Content Access",
+    description: "Unlock exclusive content with star payments",
+    icon: <CreditCard className="h-8 w-8 text-indigo-400" />
   }
 ];
 
@@ -117,10 +111,10 @@ const Login = () => {
           <div className="mb-12">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-indigo-600/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-indigo-500/30 shadow-lg mr-4">
-                <Shield className="w-6 h-6 text-indigo-400" />
+                <BlockchainShieldLogo isDark={true} />
               </div>
               <h2 className="text-3xl font-bold text-white">
-                Blockchain-Powered Content Protection
+                <span className="font-['Abril_Fatface',_cursive] italic cursive-flow">Veridica</span> Platform
               </h2>
             </div>
             <p className="text-indigo-200 text-lg">
@@ -322,12 +316,12 @@ const BrandSection = () => {
         transition={{ duration: 0.8 }}
       >
         <div className="w-20 h-20 bg-indigo-600/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-indigo-500/30 shadow-lg mb-6">
-          <Shield className="w-10 h-10 text-indigo-400" />
+          <BlockchainShieldLogo isDark={true} />
         </div>
         
         <div className="relative">
-          <h1 className="text-5xl md:text-6xl font-bold italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 tracking-wide relative z-10">
-            VERIDICA
+          <h1 className="text-5xl md:text-6xl font-['Abril_Fatface',_cursive] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 tracking-wide relative z-10 cursive-flow">
+            Veridica
           </h1>
           
           {/* Animated Wave Effect */}
@@ -350,28 +344,56 @@ const BrandSection = () => {
           Blockchain Content Authenticity Platform
         </p>
       </motion.div>
-      
-      {/* CSS for Wave Animation */}
-      <style jsx>{`
-        @keyframes waveAnimation {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
-        }
-        
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
-        }
-      `}</style>
     </div>
+  );
+};
+
+// Custom blockchain shield logo component with cursive X
+const BlockchainShieldLogo: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+  const mainColor = isDark ? '#fff' : '#000';
+  const accentColor = isDark ? '#818cf8' : '#4f46e5';
+  
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Shield Base */}
+      <path 
+        d="M20 3L5 9V20C5 28.2843 11.7157 35 20 35C28.2843 35 35 28.2843 35 20V9L20 3Z" 
+        stroke={mainColor} 
+        strokeWidth="2" 
+        fill="none"
+      />
+      
+      {/* Blockchain Nodes */}
+      <circle cx="14" cy="16" r="2" fill={accentColor} />
+      <circle cx="20" cy="22" r="2" fill={accentColor} />
+      <circle cx="26" cy="16" r="2" fill={accentColor} />
+      <circle cx="14" cy="28" r="2" fill={accentColor} />
+      <circle cx="26" cy="28" r="2" fill={accentColor} />
+      
+      {/* Blockchain Connections */}
+      <line x1="14" y1="16" x2="20" y2="22" stroke={accentColor} strokeWidth="1" />
+      <line x1="20" y1="22" x2="26" y2="16" stroke={accentColor} strokeWidth="1" />
+      <line x1="14" y1="16" x2="26" y2="16" stroke={accentColor} strokeWidth="1" />
+      <line x1="14" y1="28" x2="20" y2="22" stroke={accentColor} strokeWidth="1" />
+      <line x1="20" y1="22" x2="26" y2="28" stroke={accentColor} strokeWidth="1" />
+      <line x1="14" y1="28" x2="26" y2="28" stroke={accentColor} strokeWidth="1" />
+      
+      {/* Cursive X in the center */}
+      <path 
+        d="M17 19C18 20 19 21 20 22C21 21 22 20 23 19" 
+        stroke={mainColor} 
+        strokeWidth="1.5" 
+        strokeLinecap="round" 
+        fill="none"
+      />
+      <path 
+        d="M23 25C22 24 21 23 20 22C19 23 18 24 17 25" 
+        stroke={mainColor} 
+        strokeWidth="1.5" 
+        strokeLinecap="round" 
+        fill="none"
+      />
+    </svg>
   );
 };
 

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Clock, Heart, Users, Filter, Search, X, Tag } from 'lucide-react';
+import { TrendingUp, Clock, Heart, Users, Filter, Search, X, Tag, Lock, Star } from 'lucide-react';
 import { useFeed } from '../hooks/useFeed';
 import { SortOption } from '../types/feed';
 import FeedPost from '../components/FeedPost';
 import CommentSection from '../components/CommentSection';
 import { toast } from 'react-toastify';
+import BuyStarsModal from '../components/BuyStarsModal';
 
 const SocialFeed = () => {
   const [sortBy, setSortBy] = useState<SortOption>('recent');
@@ -14,8 +15,18 @@ const SocialFeed = () => {
   const [searchInput, setSearchInput] = useState('');
   const [showTagSearch, setShowTagSearch] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [showPremiumContent, setShowPremiumContent] = useState(false);
+  const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
   
   const { posts, postStats, loading, addReaction, sendStarDonation, getAllTags } = useFeed(sortBy, searchTags);
+
+  // Generate some premium content
+  const premiumPosts = posts.slice(0, 3).map(post => ({
+    ...post,
+    isPremium: true,
+    unlockPrice: Math.floor(Math.random() * 20) + 10, // 10-30 stars
+    isUnlocked: false
+  }));
 
   useEffect(() => {
     if (getAllTags) {
@@ -67,6 +78,19 @@ const SocialFeed = () => {
     } catch {
       toast.error('Failed to send star donation');
     }
+  };
+
+  const unlockPremiumContent = (postId: string, price: number) => {
+    // In a real app, this would make a backend call to process the payment
+    // For now, we'll just simulate it
+    toast.success(`Unlocked premium content for ${price} stars!`);
+    
+    // Update the premium posts to mark this one as unlocked
+    premiumPosts.forEach(post => {
+      if (post.id === postId) {
+        post.isUnlocked = true;
+      }
+    });
   };
 
   if (loading) {
@@ -184,7 +208,66 @@ const SocialFeed = () => {
         </div>
       </div>
 
-      {/* Feed */}
+      {/* Premium Content Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-['Abril_Fatface',_cursive] italic text-gray-900 dark:text-white">Premium Content</h2>
+          <button
+            onClick={() => setShowPremiumContent(!showPremiumContent)}
+            className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg shadow-md hover:from-yellow-500 hover:to-orange-600 transition-colors"
+          >
+            {showPremiumContent ? 'Hide Premium' : 'Show Premium'}
+          </button>
+        </div>
+        
+        <AnimatePresence>
+          {showPremiumContent && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-4"
+            >
+              {premiumPosts.map((post) => (
+                <div key={post.id} className="relative rounded-lg overflow-hidden border border-yellow-300 dark:border-yellow-700">
+                  {/* Blurred Content */}
+                  <div className={`relative ${post.isUnlocked ? '' : 'filter blur-lg'}`}>
+                    <div className="aspect-video bg-gray-200 dark:bg-gray-700">
+                      <img 
+                        src={post.thumbnail_url || 'https://images.pexels.com/photos/2156881/pexels-photo-2156881.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="p-4 bg-white dark:bg-gray-800">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">{post.title}</h3>
+                      <p className="text-gray-600 dark:text-gray-300 mt-2">{post.description}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Unlock Overlay */}
+                  {!post.isUnlocked && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-6 text-center">
+                      <Lock className="w-12 h-12 text-yellow-400 mb-4" />
+                      <h3 className="text-xl font-bold text-white mb-2">Premium Content</h3>
+                      <p className="text-gray-300 mb-4">Unlock this exclusive content to view it in full quality</p>
+                      <button
+                        onClick={() => unlockPremiumContent(post.id, post.unlockPrice)}
+                        className="flex items-center px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg shadow-lg hover:from-yellow-500 hover:to-orange-600 transition-colors"
+                      >
+                        <Star className="w-5 h-5 mr-2 fill-current" />
+                        Unlock for {post.unlockPrice} Stars
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Regular Feed */}
       <div className="space-y-6">
         {posts.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
@@ -236,7 +319,62 @@ const SocialFeed = () => {
           onClose={() => setSelectedPostForComments(null)}
         />
       )}
+
+      {/* Buy Stars Modal */}
+      <BuyStarsModal 
+        isOpen={showBuyStarsModal}
+        onClose={() => setShowBuyStarsModal(false)}
+      />
     </motion.div>
+  );
+};
+
+// Custom blockchain shield logo component with cursive X
+const BlockchainShieldLogo: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+  const mainColor = isDark ? '#fff' : '#000';
+  const accentColor = isDark ? '#818cf8' : '#4f46e5';
+  
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Shield Base */}
+      <path 
+        d="M20 3L5 9V20C5 28.2843 11.7157 35 20 35C28.2843 35 35 28.2843 35 20V9L20 3Z" 
+        stroke={mainColor} 
+        strokeWidth="2" 
+        fill="none"
+      />
+      
+      {/* Blockchain Nodes */}
+      <circle cx="14" cy="16" r="2" fill={accentColor} />
+      <circle cx="20" cy="22" r="2" fill={accentColor} />
+      <circle cx="26" cy="16" r="2" fill={accentColor} />
+      <circle cx="14" cy="28" r="2" fill={accentColor} />
+      <circle cx="26" cy="28" r="2" fill={accentColor} />
+      
+      {/* Blockchain Connections */}
+      <line x1="14" y1="16" x2="20" y2="22" stroke={accentColor} strokeWidth="1" />
+      <line x1="20" y1="22" x2="26" y2="16" stroke={accentColor} strokeWidth="1" />
+      <line x1="14" y1="16" x2="26" y2="16" stroke={accentColor} strokeWidth="1" />
+      <line x1="14" y1="28" x2="20" y2="22" stroke={accentColor} strokeWidth="1" />
+      <line x1="20" y1="22" x2="26" y2="28" stroke={accentColor} strokeWidth="1" />
+      <line x1="14" y1="28" x2="26" y2="28" stroke={accentColor} strokeWidth="1" />
+      
+      {/* Cursive X in the center */}
+      <path 
+        d="M17 19C18 20 19 21 20 22C21 21 22 20 23 19" 
+        stroke={mainColor} 
+        strokeWidth="1.5" 
+        strokeLinecap="round" 
+        fill="none"
+      />
+      <path 
+        d="M23 25C22 24 21 23 20 22C19 23 18 24 17 25" 
+        stroke={mainColor} 
+        strokeWidth="1.5" 
+        strokeLinecap="round" 
+        fill="none"
+      />
+    </svg>
   );
 };
 

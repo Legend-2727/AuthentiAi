@@ -19,6 +19,8 @@ export default {
         ],
         cursive: [
           'Abril Fatface',
+          'Dancing Script',
+          'Great Vibes',
           'cursive'
         ],
       },
@@ -72,6 +74,8 @@ export default {
         'float': 'float 6s ease-in-out infinite',
         'glow': 'glow 3s ease-in-out infinite',
         'cursive-flow': 'cursiveFlow 8s ease-in-out infinite',
+        'pulse-blur': 'pulseBlur 4s ease-in-out infinite',
+        'shimmer': 'shimmer 3s infinite',
       },
     },
   },

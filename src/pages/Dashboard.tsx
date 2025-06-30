@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, User, Home, Menu, X, Video, Plus, Mic, Users, Shield, Star } from 'lucide-react';
+import { LogOut, User, Home, Menu, X, Video, Plus, Mic, Users, Shield, Star, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 import UserAvatar from '../components/UserAvatar';
@@ -17,6 +17,7 @@ import MyVideos from './MyVideos';
 import MyAudioPosts from './MyAudioPosts';
 import SocialFeed from './SocialFeed';
 import OwnershipDemo from './OwnershipDemo';
+import PremiumContent from './PremiumContent';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -50,7 +51,7 @@ const Dashboard = () => {
                 <div className="w-6 h-6 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center mr-2">
                   <Shield className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-xl font-['Abril_Fatface',_cursive] italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-xl font-['Abril_Fatface',_cursive] italic bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent cursive-flow">
                   Veridica
                 </span>
               </div>
@@ -104,7 +105,7 @@ const Dashboard = () => {
                 <Shield className="w-6 h-6 text-white drop-shadow-sm" />
               </div>
               <div className="flex flex-col">
-                <h1 className="text-2xl font-['Abril_Fatface',_cursive] italic text-white tracking-tight drop-shadow-sm">
+                <h1 className="text-2xl font-['Abril_Fatface',_cursive] italic text-white tracking-tight drop-shadow-sm cursive-flow">
                   Veridica
                 </h1>
                 <p className="text-xs text-white/80 font-medium tracking-wide">
@@ -141,6 +142,14 @@ const Dashboard = () => {
               >
                 <Users className="mr-3 h-5 w-5" />
                 Social Feed
+              </a>
+              <a
+                href="/dashboard/premium"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Lock className="mr-3 h-5 w-5" />
+                Premium Content
               </a>
               <a
                 href="/dashboard/home"
@@ -225,6 +234,7 @@ const Dashboard = () => {
               <Route path="/" element={<Navigate to="/dashboard/feed" replace />} />
               <Route path="/home" element={<DashboardHome />} />
               <Route path="/feed" element={<SocialFeed />} />
+              <Route path="/premium" element={<PremiumContent />} />
               <Route path="/profile" element={<ProfileSettings />} />
               <Route path="/create" element={<CreateContent />} />
               <Route path="/create/video" element={<CreateVideo />} />

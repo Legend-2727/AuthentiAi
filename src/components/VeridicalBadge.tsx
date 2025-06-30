@@ -10,13 +10,6 @@ const VeridicalBadge: React.FC<VeridicalBadgeProps> = ({
 }) => {
   const { isDark } = useTheme();
 
-  // Use white circle on dark backgrounds, black circle on light backgrounds
-  const getImageSrc = () => {
-    return isDark 
-      ? '/src/assets/badges/white_circle_360x360.png'
-      : '/src/assets/badges/black_circle_360x360.png';
-  };
-
   return (
     <div className={`fixed top-4 right-4 z-50 ${className}`}>
       <div className={`
@@ -27,7 +20,10 @@ const VeridicalBadge: React.FC<VeridicalBadgeProps> = ({
         }
       `}>
         <img 
-          src={getImageSrc()}
+          src={isDark 
+            ? '/src/assets/badges/white_circle_360x360.png'
+            : '/src/assets/badges/black_circle_360x360.png'
+          }
           alt="Veridica"
           className="w-10 h-10 object-contain"
         />
