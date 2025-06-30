@@ -35,12 +35,12 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
   const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
 
   // Check if this content is already unlocked
-  useState(() => {
+  React.useEffect(() => {
     const unlockedContent = localStorage.getItem(`unlocked_content_${id}`);
     if (unlockedContent === 'true') {
       setIsUnlocked(true);
     }
-  });
+  }, [id]);
 
   const handleUnlock = async () => {
     if (!user) {
@@ -51,36 +51,37 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
     setIsUnlocking(true);
     
     try {
-      // Check if user has enough stars
       const currentBalance = getStarBalance();
       
       if (currentBalance < unlockPrice) {
-        toast.error(`Not enough stars. You need ${unlockPrice} stars to unlock this content.`);
+        toast.error(`Insufficient stars! You need ${unlockPrice} stars but only have ${currentBalance}.`);
         setShowBuyStarsModal(true);
         return;
       }
       
       // Process the transaction
-      const result = await processStarTransaction(
-        user.id,
-        creatorId,
-        unlockPrice,
-        id,
-        contentType,
-        `Premium content unlock: ${title}`
-      );
+      const success = await processStarTransaction({
+        fromUserId: user.id,
+        toUserId: creatorId,
+        amount: unlockPrice,
+        type: 'content_unlock',
+        metadata: {
+          contentId: id,
+          contentTitle: title,
+          contentType
+        }
+      });
       
-      if (result.success) {
-        // Mark as unlocked
+      if (success) {
         setIsUnlocked(true);
         localStorage.setItem(`unlocked_content_${id}`, 'true');
-        toast.success(`Content unlocked! ${unlockPrice} stars sent to ${creatorName}.`);
+        toast.success(`Content unlocked! ${unlockPrice} stars sent to ${creatorName}`);
       } else {
-        toast.error(result.error || 'Failed to unlock content');
+        toast.error('Failed to unlock content. Please try again.');
       }
     } catch (error) {
       console.error('Error unlocking content:', error);
-      toast.error('Failed to unlock content. Please try again.');
+      toast.error('An error occurred while unlocking content');
     } finally {
       setIsUnlocking(false);
     }
@@ -95,11 +96,13 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
     >
       {/* Content Preview */}
       <div className="relative">
-        <div className={`aspect-video bg-gray-200 dark:bg-gray-700 ${!isUnlocked ? 'premium-blur premium-shimmer' : ''}`}>
+        <div className="aspect-video bg-gray-200 dark:bg-gray-700 overflow-hidden">
           <img 
             src={thumbnailUrl || 'https://images.pexels.com/photos/2156881/pexels-photo-2156881.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
             alt={title}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-all duration-500 ${
+              !isUnlocked ? 'blur-lg scale-105' : 'blur-0 scale-100'
+            }`}
           />
           
           {/* Content Type Badge */}
@@ -108,12 +111,17 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
           </div>
         </div>
         
-        {/* Lock Overlay */}
+        {/* Premium Unlock Overlay - Only visible when locked */}
         {!isUnlocked && (
-          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-6 text-center">
+          <motion.div 
+            className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-6 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <Lock className="w-12 h-12 text-yellow-400 mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">Premium Content</h3>
-            <p className="text-gray-300 mb-4">Unlock this exclusive content for {unlockPrice} stars</p>
+            <p className="text-gray-300 mb-4">Unlock this exclusive content to view it in full quality</p>
             <button
               onClick={handleUnlock}
               disabled={isUnlocking}
@@ -127,11 +135,23 @@ const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
               ) : (
                 <>
                   <Star className="w-5 h-5 mr-2 fill-current" />
-                  Unlock Now
+                  Unlock for {unlockPrice} Stars
                 </>
               )}
             </button>
-          </div>
+          </motion.div>
+        )}
+        
+        {/* Success Message - Shows briefly after unlock */}
+        {isUnlocked && (
+          <motion.div 
+            className="absolute top-2 right-2 bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-medium"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+          >
+            ✓ Unlocked!
+          </motion.div>
         )}
       </div>
       
