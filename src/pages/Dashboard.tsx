@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, User, Home, Menu, X, Video, Plus, Mic, Users, Shield } from 'lucide-react';
+import { LogOut, User, Home, Menu, X, Video, Plus, Mic, Users, Shield, Star } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 import UserAvatar from '../components/UserAvatar';
+import StarWallet from '../components/StarWallet';
+import BuyStarsModal from '../components/BuyStarsModal';
+import StarSystemDemo from '../components/StarSystemDemo';
 import DashboardHome from './DashboardHome';
 import ProfileSettings from './ProfileSettings';
 import CreateContent from './CreateContent';
@@ -18,6 +21,7 @@ import OwnershipDemo from './OwnershipDemo';
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showBuyStarsModal, setShowBuyStarsModal] = useState(false);
 
   if (!user) {
     return <Navigate to="/login" />;
@@ -52,8 +56,12 @@ const Dashboard = () => {
               </div>
             </div>
           </button>
-          <div className="lg:hidden">
-            {isMobileMenuOpen ? <X size={24} className="text-gray-600 dark:text-gray-300" /> : <Menu size={24} className="text-gray-600 dark:text-gray-300" />}
+          
+          <div className="flex items-center space-x-2">
+            <StarWallet onBuyStars={() => setShowBuyStarsModal(true)} />
+            <div className="lg:hidden">
+              {isMobileMenuOpen ? <X size={24} className="text-gray-600 dark:text-gray-300" /> : <Menu size={24} className="text-gray-600 dark:text-gray-300" />}
+            </div>
           </div>
         </div>
       </div>
@@ -107,7 +115,7 @@ const Dashboard = () => {
           </div>
           <div className="flex-1 overflow-y-auto py-6 space-y-1">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 mb-3">
                 <div className="flex-shrink-0">
                   <UserAvatar user={user} size="md" />
                 </div>
@@ -117,6 +125,11 @@ const Dashboard = () => {
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                 </div>
+              </div>
+              
+              {/* Star Wallet in Sidebar */}
+              <div className="flex justify-center">
+                <StarWallet onBuyStars={() => setShowBuyStarsModal(true)} />
               </div>
             </div>
             
@@ -170,6 +183,14 @@ const Dashboard = () => {
                 Profile Settings
               </a>
               <a
+                href="/dashboard/star-demo"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Star className="mr-3 h-5 w-5" />
+                Star System Demo
+              </a>
+              <a
                 href="/dashboard/ownership-demo"
                 className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -210,12 +231,19 @@ const Dashboard = () => {
               <Route path="/create-audio" element={<CreateAudioPost />} />
               <Route path="/my-videos" element={<MyVideos />} />
               <Route path="/my-audio" element={<MyAudioPosts />} />
+              <Route path="/star-demo" element={<StarSystemDemo />} />
               <Route path="/ownership-demo" element={<OwnershipDemo />} />
               <Route path="*" element={<Navigate to="/dashboard/feed" replace />} />
             </Routes>
           </div>
         </main>
       </div>
+
+      {/* Buy Stars Modal */}
+      <BuyStarsModal 
+        isOpen={showBuyStarsModal}
+        onClose={() => setShowBuyStarsModal(false)}
+      />
     </div>
   );
 };

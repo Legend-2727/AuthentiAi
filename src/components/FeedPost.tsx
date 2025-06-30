@@ -16,6 +16,7 @@ import {
 import { FeedPost as FeedPostType, PostStats } from '../types/feed';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'react-toastify';
+import GiveStarButton from './GiveStarButton';
 
 interface FeedPostProps {
   post: FeedPostType;
@@ -268,14 +269,17 @@ const FeedPost = ({ post, stats, onReaction, onStarDonation, onComment }: FeedPo
             </button>
           </div>
 
-          {/* Star Donation */}
-          <button
-            onClick={() => setShowStarModal(true)}
-            className="flex items-center space-x-2 bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
-          >
-            <Star className="w-4 h-4" />
-            <span>Send Stars</span>
-          </button>
+          {/* Give Star Button */}
+          <GiveStarButton 
+            creatorId={post.creator.id}
+            contentId={post.id}
+            onStarGiven={(success) => {
+              if (success) {
+                toast.success(`Star sent to ${post.creator.display_name}!`);
+              }
+            }}
+            variant="default"
+          />
         </div>
       </div>
 

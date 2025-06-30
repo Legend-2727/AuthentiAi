@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { initRevenueCat, getStarBalance, setStarBalance } from './lib/revenuecat';
 import VeridicalBadge from './components/VeridicalBadge';
 import MouseWaveEffect from './components/MouseWaveEffect';
 import Login from './pages/Login';
@@ -17,10 +18,21 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already authenticated
+    // Check if user is already authenticated and initialize RevenueCat
     const checkAuth = async () => {
       try {
-        await supabase.auth.getSession();
+        const { data } = await supabase.auth.getSession();
+        
+        // Initialize RevenueCat with user ID if authenticated
+        const userId = data.session?.user?.id || null;
+        await initRevenueCat(userId);
+        
+        // Give new users some initial stars for testing (only if they have 0)
+        if (userId && getStarBalance() === 0) {
+          setStarBalance(50); // Give 50 stars to start with
+          console.log('Welcome bonus: 50 stars added to your wallet!');
+        }
+        
       } catch (error) {
         console.error('Error checking auth session:', error);
       } finally {
