@@ -74,6 +74,7 @@ interface RevenueCatPackage {
 // RevenueCat configuration
 let isConfigured = false;
 let rcInstance: RevenueCatInstance | null = null;
+let scriptLoadFailed = false;
 
 export const debugRevenueCat = () => {
   const apiKey = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY;
@@ -83,6 +84,7 @@ export const debugRevenueCat = () => {
   console.log('DEBUG - Key starts with:', apiKey ? apiKey.substring(0, 10) : 'undefined');
   console.log('DEBUG - isConfigured:', isConfigured);
   console.log('DEBUG - rcInstance:', !!rcInstance);
+  console.log('DEBUG - scriptLoadFailed:', scriptLoadFailed);
   console.log('DEBUG - Window RCPurchases:', !!window.RCPurchases);
   console.log('DEBUG - All env vars:', import.meta.env);
   
@@ -90,18 +92,18 @@ export const debugRevenueCat = () => {
   console.log('DEBUG - Is production key?:', apiKey === 'rcb_nxFaEtdIxcXFtxLKnIAUHGfwVyOq');
   console.log('DEBUG - Is sandbox key?:', apiKey === 'rcb_sb_tnaXRWTYEDSfqrrioYhfzRKVU');
   
-  return { apiKey, isConfigured, hasInstance: !!rcInstance };
+  return { apiKey, isConfigured, hasInstance: !!rcInstance, scriptLoadFailed };
 };
 
 export const initRevenueCat = async (userId: string | null = null) => {
-  if (isConfigured) return;
+  if (isConfigured || scriptLoadFailed) return;
 
   try {
     const apiKey = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY;
     console.log('initRevenueCat called with apiKey:', apiKey);
     
     if (!apiKey || apiKey === 'your_revenuecat_web_api_key_here' || apiKey === 'your_actual_revenuecat_web_api_key_here') {
-      console.warn('RevenueCat API key not configured. Star purchases will be disabled.');
+      console.warn('RevenueCat API key not configured. Star purchases will use mock system.');
       console.warn('Current API key value:', apiKey);
       return;
     }
@@ -111,7 +113,13 @@ export const initRevenueCat = async (userId: string | null = null) => {
     console.log('Loading RevenueCat Web SDK...');
     // Load RevenueCat Web SDK script if not already loaded
     if (!window.RCPurchases) {
-      await loadRevenueCatScript();
+      try {
+        await loadRevenueCatScript();
+      } catch (error) {
+        console.warn('RevenueCat script failed to load, falling back to mock system:', error);
+        scriptLoadFailed = true;
+        return;
+      }
     }
 
     console.log('Configuring RevenueCat with API key:', apiKey.substring(0, 10) + '...');
@@ -133,7 +141,8 @@ export const initRevenueCat = async (userId: string | null = null) => {
     }
 
   } catch (error) {
-    console.error('Failed to configure RevenueCat:', error);
+    console.warn('Failed to configure RevenueCat, falling back to mock system:', error);
+    scriptLoadFailed = true;
   }
 };
 
@@ -149,7 +158,16 @@ const loadRevenueCatScript = (): Promise<void> => {
     const script = document.createElement('script');
     script.src = 'https://js.revenuecat.com/revenuecat-web-js/1.7.0/revenuecat-web-js.min.js';
     script.async = true;
+    
+    // Set a timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      console.error('RevenueCat script load timeout');
+      script.remove();
+      reject(new Error('Script load timeout'));
+    }, 10000); // 10 second timeout
+
     script.onload = () => {
+      clearTimeout(timeout);
       console.log('RevenueCat script loaded successfully');
       // Wait a bit for the script to initialize
       setTimeout(() => {
@@ -162,10 +180,14 @@ const loadRevenueCatScript = (): Promise<void> => {
         }
       }, 100);
     };
+    
     script.onerror = (error) => {
+      clearTimeout(timeout);
       console.error('Failed to load RevenueCat script:', error);
-      reject(new Error('Failed to load RevenueCat script'));
+      script.remove();
+      reject(new Error('Failed to load RevenueCat script - this may be due to network issues, ad blockers, or CDN unavailability'));
     };
+    
     document.head.appendChild(script);
   });
 };
@@ -187,10 +209,14 @@ export const handleCustomerInfoUpdate = async (customerInfo: CustomerInfo) => {
 
 export const getStarPackages = async (): Promise<StarPackage[]> => {
   try {
-    console.log('getStarPackages called - isConfigured:', isConfigured, 'rcInstance:', !!rcInstance);
+    console.log('getStarPackages called - isConfigured:', isConfigured, 'rcInstance:', !!rcInstance, 'scriptLoadFailed:', scriptLoadFailed);
     
-    if (!isConfigured || !rcInstance) {
-      console.warn('RevenueCat not configured, returning mock star packages. isConfigured:', isConfigured, 'rcInstance:', !!rcInstance);
+    if (!isConfigured || !rcInstance || scriptLoadFailed) {
+      console.log('RevenueCat not available, returning mock star packages. Reasons:', {
+        isConfigured,
+        hasInstance: !!rcInstance,
+        scriptLoadFailed
+      });
       return getMockStarPackages();
     }
 
@@ -276,8 +302,8 @@ const getMockStarPackages = (): StarPackage[] => [
 
 export const purchaseStarPackage = async (packageIdentifier: string): Promise<PurchaseResult> => {
   try {
-    if (!isConfigured || !rcInstance) {
-      console.warn('RevenueCat not configured, simulating purchase');
+    if (!isConfigured || !rcInstance || scriptLoadFailed) {
+      console.log('RevenueCat not available, using mock purchase system');
       return simulatePurchase(packageIdentifier);
     }
 
@@ -332,7 +358,7 @@ export const purchaseStarPackage = async (packageIdentifier: string): Promise<Pu
     }
     
     // Fallback to simulation for demo
-    console.warn('Falling back to simulated purchase for demo');
+    console.log('Falling back to simulated purchase for demo');
     return simulatePurchase(packageIdentifier);
   }
 };
@@ -363,8 +389,9 @@ const simulatePurchase = (packageIdentifier: string): PurchaseResult => {
 
 export const restorePurchases = async () => {
   try {
-    if (!isConfigured || !rcInstance) {
-      throw new Error('RevenueCat not configured');
+    if (!isConfigured || !rcInstance || scriptLoadFailed) {
+      console.log('RevenueCat not available, cannot restore purchases');
+      return null;
     }
 
     const customerInfo = await rcInstance.restorePurchases();
@@ -378,8 +405,9 @@ export const restorePurchases = async () => {
 
 export const getCustomerInfo = async () => {
   try {
-    if (!isConfigured || !rcInstance) {
-      throw new Error('RevenueCat not configured');
+    if (!isConfigured || !rcInstance || scriptLoadFailed) {
+      console.log('RevenueCat not available, cannot get customer info');
+      return null;
     }
 
     return await rcInstance.getCustomerInfo();
@@ -392,7 +420,7 @@ export const getCustomerInfo = async () => {
 // Helper function to check if RevenueCat is available
 export const isRevenueCatAvailable = () => {
   const apiKey = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY;
-  return apiKey && apiKey !== 'your_revenuecat_web_api_key_here';
+  return apiKey && apiKey !== 'your_revenuecat_web_api_key_here' && !scriptLoadFailed && isConfigured;
 };
 
 // Helper function to get star balance from local storage

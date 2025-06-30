@@ -25,7 +25,13 @@ function App() {
         
         // Initialize RevenueCat with user ID if authenticated
         const userId = data.session?.user?.id || null;
-        await initRevenueCat(userId);
+        
+        // Initialize RevenueCat (this will gracefully handle failures now)
+        try {
+          await initRevenueCat(userId);
+        } catch (error) {
+          console.warn('RevenueCat initialization failed, continuing with mock system:', error);
+        }
         
         // Give new users some initial stars for testing (only if they have 0)
         if (userId && getStarBalance() === 0) {
