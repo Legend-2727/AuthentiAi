@@ -27,11 +27,11 @@ const requiredVars = [
 
 // Optional but recommended variables
 const optionalVars = [
-  'VITE_REVENUECAT_API_KEY',
+  'VITE_REVENUECAT_PUBLIC_KEY',
   'VITE_ELEVENLABS_API_KEY',
   'VITE_TAVUS_API_KEY',
-  'VITE_ALGORAND_MNEMONIC',
-  'VITE_ALGORAND_NETWORK'
+  'VITE_ALGORAND_BACKEND_MNEMONIC',
+  'VITE_ALGORAND_API_TOKEN'
 ];
 
 let hasErrors = false;

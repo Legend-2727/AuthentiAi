@@ -45,11 +45,11 @@ export function validateEnvironment(): { isValid: boolean; errors: string[] } {
   
   // Optional environment variables (will show warnings if missing)
   const optionalVars = [
-    'VITE_REVENUECAT_API_KEY',
+    'VITE_REVENUECAT_PUBLIC_KEY',
     'VITE_ELEVENLABS_API_KEY',
     'VITE_TAVUS_API_KEY',
-    'VITE_ALGORAND_MNEMONIC',
-    'VITE_ALGORAND_NETWORK',
+    'VITE_ALGORAND_BACKEND_MNEMONIC',
+    'VITE_ALGORAND_API_TOKEN',
   ];
   
   console.log('🔍 Environment Variables Check:');
@@ -100,7 +100,7 @@ export function getAppConfig(): Partial<AppConfig> {
       anonKey: getEnvVar('VITE_SUPABASE_ANON_KEY') || 'placeholder-key',
     },
     revenuecat: {
-      apiKey: getEnvVar('VITE_REVENUECAT_API_KEY', false) || '',
+      apiKey: getEnvVar('VITE_REVENUECAT_PUBLIC_KEY', false) || '',
     },
     elevenlabs: {
       apiKey: getEnvVar('VITE_ELEVENLABS_API_KEY', false) || '',
@@ -109,7 +109,7 @@ export function getAppConfig(): Partial<AppConfig> {
       apiKey: getEnvVar('VITE_TAVUS_API_KEY', false) || '',
     },
     algorand: {
-      mnemonic: getEnvVar('VITE_ALGORAND_MNEMONIC', false) || '',
+      mnemonic: getEnvVar('VITE_ALGORAND_BACKEND_MNEMONIC', false) || '',
       network: (getEnvVar('VITE_ALGORAND_NETWORK', false) as 'mainnet' | 'testnet' | 'betanet' | 'localnet') || 'testnet',
     },
   };
