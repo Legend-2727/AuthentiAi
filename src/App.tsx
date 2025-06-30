@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingScreen from './components/LoadingScreen';
 import ResetPassword from './pages/ResetPassword';
+import { EnvDebug } from './pages/EnvDebug';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -63,6 +64,7 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/env-debug" element={<EnvDebug />} />
           <Route
             path="/dashboard/*"
             element={

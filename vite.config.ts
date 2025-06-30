@@ -18,4 +18,15 @@ export default defineConfig({
       util: 'util',
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+          revenuecat: ['@revenuecat/purchases-js'],
+        },
+      },
+    },
+  },
 });

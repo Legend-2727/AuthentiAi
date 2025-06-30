@@ -1,19 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
+import { getAppConfig, validateEnvironment } from './environment';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Validate environment and get configuration
+const envValidation = validateEnvironment();
+const config = getAppConfig();
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase configuration. Please check your .env file.');
-  console.error('Required: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+if (!envValidation.isValid) {
+  console.error('❌ Environment validation failed:', envValidation.errors);
 }
 
-// Create client even with missing credentials to prevent app crash
-// The app will show appropriate error messages for missing functionality
+// Create client with validated configuration
 export const supabase = createClient<Database>(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder-key',
+  config.supabase!.url, 
+  config.supabase!.anonKey,
   {
     auth: {
       persistSession: true, // Enable persistent sessions
