@@ -106,14 +106,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { data, error };
-    } catch (error) {
-      return { error: error as Error, data: null };
+    const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
+    
+    if (deploymentMode === 'blockchain-only') {
+      // In blockchain-only mode, check localStorage for existing user
+      try {
+        const storedUser = localStorage.getItem('veridica_user');
+        
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          
+          // Simple email match (in real app, you'd want more security)
+          if (user.email === email) {
+            // Create new session
+            const session = {
+              user,
+              access_token: 'mock_token_' + Date.now(),
+              expires_at: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+            };
+            
+            localStorage.setItem('veridica_session', JSON.stringify(session));
+            setUser(user);
+            setSession(session as any);
+            
+            return { data: { user, session }, error: null };
+          }
+        }
+        
+        // User not found or email doesn't match
+        return { 
+          data: null, 
+          error: { message: 'Invalid login credentials' } as Error 
+        };
+      } catch (error) {
+        return { error: error as Error, data: null };
+      }
+    } else {
+      // Full mode - use Supabase
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        return { data, error };
+      } catch (error) {
+        return { error: error as Error, data: null };
+      }
     }
   };
 
