@@ -32,16 +32,25 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Top Header Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Top Header Bar - Mobile */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
+        <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={toggleMobileMenu}
             className="flex items-center space-x-3 focus:outline-none"
           >
             <UserAvatar user={user} size="sm" />
-            <span className="font-semibold text-gray-900 dark:text-white">Veridica</span>
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center">
+                <div className="w-6 h-6 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+                  <Shield className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  Veridica
+                </span>
+              </div>
+            </div>
           </button>
           <div className="lg:hidden">
             {isMobileMenuOpen ? <X size={24} className="text-gray-600 dark:text-gray-300" /> : <Menu size={24} className="text-gray-600 dark:text-gray-300" />}
@@ -69,23 +78,41 @@ const Dashboard = () => {
 
       {/* Sidebar */}
       <motion.aside
-        className={`fixed inset-y-0 left-0 z-10 w-64 bg-white dark:bg-gray-800 shadow-lg transition-transform transform lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-10 w-64 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700 transition-transform transform lg:translate-x-0 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         initial={false}
       >
         <div className="h-full flex flex-col">
-          <div className="flex items-center justify-center h-16 px-4 bg-indigo-600 dark:bg-indigo-700">
-            <h1 className="text-xl font-bold text-white">Veridica</h1>
+          {/* Elegant Header with Beautiful Branding */}
+          <div className="flex items-center justify-center h-20 px-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-700/20"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
+            
+            {/* Logo and Brand */}
+            <div className="relative flex items-center space-x-3 z-10">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 shadow-lg">
+                <Shield className="w-6 h-6 text-white drop-shadow-sm" />
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-2xl font-bold text-white tracking-tight drop-shadow-sm">
+                  Veridica
+                </h1>
+                <p className="text-xs text-white/80 font-medium tracking-wide">
+                  BLOCKCHAIN VERIFIED
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto py-4 space-y-1">
-            <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-3">
+          <div className="flex-1 overflow-y-auto py-6 space-y-1">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-4">
                 <div className="flex-shrink-0">
                   <UserAvatar user={user} size="md" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                     {user.user_metadata?.username || user.email}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
@@ -93,10 +120,10 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <nav className="mt-5 px-2 space-y-1">
+            <nav className="mt-6 px-3 space-y-2">
               <a
                 href="/dashboard/feed"
-                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/50"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 shadow-sm transition-all duration-200 hover:shadow-md"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Users className="mr-3 h-5 w-5" />
@@ -104,7 +131,7 @@ const Dashboard = () => {
               </a>
               <a
                 href="/dashboard/home"
-                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Home className="mr-3 h-5 w-5" />
@@ -112,7 +139,7 @@ const Dashboard = () => {
               </a>
               <a
                 href="/dashboard/create"
-                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Plus className="mr-3 h-5 w-5" />
@@ -120,7 +147,7 @@ const Dashboard = () => {
               </a>
               <a
                 href="/dashboard/my-audio"
-                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Mic className="mr-3 h-5 w-5" />
@@ -128,7 +155,7 @@ const Dashboard = () => {
               </a>
               <a
                 href="/dashboard/my-videos"
-                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Video className="mr-3 h-5 w-5" />
@@ -136,7 +163,7 @@ const Dashboard = () => {
               </a>
               <a
                 href="/dashboard/profile"
-                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <User className="mr-3 h-5 w-5" />
@@ -144,7 +171,7 @@ const Dashboard = () => {
               </a>
               <a
                 href="/dashboard/ownership-demo"
-                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
+                className="group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Shield className="mr-3 h-5 w-5" />
@@ -153,13 +180,13 @@ const Dashboard = () => {
             </nav>
             
             {/* Theme toggle and sign out */}
-            <div className="mt-auto px-2 pb-4 space-y-2">
+            <div className="mt-auto px-3 pb-6 space-y-3">
               <div className="flex justify-center">
                 <ThemeToggle />
               </div>
               <button
                 onClick={handleSignOut}
-                className="w-full group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
+                className="w-full group flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 border border-transparent hover:border-red-200 dark:hover:border-red-800/50"
               >
                 <LogOut className="mr-3 h-5 w-5" />
                 Sign Out
@@ -172,7 +199,7 @@ const Dashboard = () => {
       {/* Main content */}
       <div className="lg:pl-64">
         <main className="py-10 pt-20 lg:pt-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900 min-h-screen rounded-lg lg:rounded-none shadow-sm lg:shadow-none">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard/feed" replace />} />
               <Route path="/home" element={<DashboardHome />} />
