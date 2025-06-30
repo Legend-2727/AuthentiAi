@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mic, Calendar, Download, Eye, Trash2, Edit, Hash } from 'lucide-react';
+import { Mic, Calendar, Download, Eye, Trash2, Hash } from 'lucide-react';
 import { useAudioPosts } from '../hooks/useAudioPosts';
 import { toast } from 'react-toastify';
 import AudioPlayer from '../components/AudioPlayer';
+import AudioPostInteractions from '../components/AudioPostInteractions';
 
 const MyAudioPosts = () => {
   const { audioPosts, loading, deleteAudioPost } = useAudioPosts();
@@ -56,13 +57,13 @@ const MyAudioPosts = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-8 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-          <h2 className="text-3xl font-bold text-gray-900 flex items-center">
-            <Mic className="h-8 w-8 mr-3 text-purple-600" />
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
+            <Mic className="h-8 w-8 mr-3 text-purple-600 dark:text-purple-400" />
             My Audio Posts
           </h2>
-          <p className="mt-1 text-gray-600">
+          <p className="mt-1 text-gray-600 dark:text-gray-300">
             View and manage all your audio content and podcasts.
           </p>
         </div>
@@ -70,9 +71,9 @@ const MyAudioPosts = () => {
         <div className="px-6 py-6">
           {audioPosts.length === 0 ? (
             <div className="text-center py-12">
-              <Mic className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No audio posts yet</h3>
-              <p className="text-gray-600 mb-6">
+              <Mic className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No audio posts yet</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 You haven't created any audio content yet. Start by creating your first audio post!
               </p>
               <a
@@ -87,7 +88,7 @@ const MyAudioPosts = () => {
               {audioPosts.map((post) => (
                 <motion.div
                   key={post.id}
-                  className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow bg-white dark:bg-gray-800"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
@@ -95,12 +96,12 @@ const MyAudioPosts = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{post.title}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{post.title}</h3>
                         {getGenerationTypeBadge(post.generation_type)}
-                        <span className="text-sm text-gray-500">v{post.version}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">v{post.version}</span>
                       </div>
                       
-                      <div className="flex items-center text-sm text-gray-500 mb-3">
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
                         <Calendar className="h-4 w-4 mr-1" />
                         {new Date(post.created_at).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -112,7 +113,7 @@ const MyAudioPosts = () => {
                       </div>
 
                       {post.description && (
-                        <p className="text-gray-600 text-sm mb-3">{post.description}</p>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">{post.description}</p>
                       )}
 
                       {post.tags && post.tags.length > 0 && (
@@ -120,7 +121,7 @@ const MyAudioPosts = () => {
                           {post.tags.map((tag, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
                             >
                               #{tag}
                             </span>
@@ -130,42 +131,45 @@ const MyAudioPosts = () => {
 
                       {post.script && (
                         <details className="mb-4">
-                          <summary className="cursor-pointer text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                          <summary className="cursor-pointer text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">
                             View Script
                           </summary>
-                          <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{post.script}</p>
+                          <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{post.script}</p>
                           </div>
                         </details>
                       )}
 
                       {/* Content Hash for Authenticity */}
                       <div className="flex items-center space-x-2 mb-4">
-                        <Hash className="h-4 w-4 text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <Hash className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           Content Hash: {btoa(post.id + post.created_at).substring(0, 16)}
                         </span>
                       </div>
+
+                      {/* Interaction Stats */}
+                      <AudioPostInteractions audioPostId={post.id} className="mb-4" />
                     </div>
 
                     <div className="flex items-center space-x-2 ml-4">
                       <button
                         onClick={() => setSelectedPost(selectedPost === post.id ? null : post.id)}
-                        className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                        className="p-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-colors"
                         title="Toggle audio player"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => downloadAudio(post.audio_url, post.title)}
-                        className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                        className="p-2 text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors"
                         title="Download audio"
                       >
                         <Download className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(post.id)}
-                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                         title="Delete audio post"
                       >
                         <Trash2 className="h-4 w-4" />

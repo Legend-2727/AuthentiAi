@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { AudioPost, AudioThread, AudioVersion } from '../types/audio';
+import { AudioPost, AudioThread } from '../types/audio';
 
 export const useAudioPosts = () => {
   const { user } = useAuth();
@@ -31,23 +31,79 @@ export const useAudioPosts = () => {
     fetchAudioPosts();
   }, [user]);
 
+  const ensureUserExists = async (userId: string, userEmail: string) => {
+    try {
+      // Check if user already exists
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      if (existingUser) {
+        console.log('User already exists in users table');
+        return;
+      }
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      // User doesn't exist, create them
+      console.log('Creating user record in users table');
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: userEmail,
+          username: userEmail.split('@')[0], // Use email prefix as username
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      console.log('User record created successfully');
+    } catch (error) {
+      console.error('Error ensuring user exists:', error);
+      throw error;
+    }
+  };
+
   const createAudioPost = async (audioPost: Omit<AudioPost, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) throw new Error('User not authenticated');
 
-    const { data, error } = await supabase
-      .from('audio_posts')
-      .insert([
-        {
-          ...audioPost,
-          user_id: user.id,
-        },
-      ])
-      .select()
-      .single();
+    try {
+      console.log('Creating audio post with data:', audioPost);
+      
+      // Ensure user exists in users table before creating audio post
+      await ensureUserExists(user.id, user.email || '');
+      
+      const insertData = {
+        ...audioPost,
+        user_id: user.id,
+      };
+      
+      console.log('Insert data:', insertData);
 
-    if (error) throw error;
-    await fetchAudioPosts();
-    return data;
+      const { data, error } = await supabase
+        .from('audio_posts')
+        .insert([insertData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database insert error:', error);
+        throw error;
+      }
+
+      console.log('Audio post created successfully:', data);
+      await fetchAudioPosts();
+      return data;
+    } catch (error) {
+      console.error('Error in createAudioPost:', error);
+      throw error;
+    }
   };
 
   const updateAudioPost = async (id: string, updates: Partial<AudioPost>) => {
@@ -81,6 +137,7 @@ export const useAudioPosts = () => {
 };
 
 export const useAudioThreads = (audioPostId: string) => {
+  const { user } = useAuth();
   const [threads, setThreads] = useState<AudioThread[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -108,7 +165,6 @@ export const useAudioThreads = (audioPostId: string) => {
   }, [audioPostId]);
 
   const addThread = async (message: string, messageType: AudioThread['message_type'] = 'user_feedback') => {
-    const { user } = useAuth();
     if (!user) throw new Error('User not authenticated');
 
     const { data, error } = await supabase

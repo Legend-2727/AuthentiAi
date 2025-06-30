@@ -65,6 +65,7 @@ export interface PostStats {
   comment_count: number;
   star_count: number;
   star_value: number; // in dollars
+  user_reaction?: '❤️' | '👏' | '🔥' | '🎵'; // The current user's reaction
 }
 
 export type SortOption = 'recent' | 'popular' | 'trending' | 'following';

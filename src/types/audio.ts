@@ -10,11 +10,11 @@ export interface AudioPost {
   id: string;
   user_id: string;
   title: string;
-  description: string;
+  description: string | null;
   tags: string[];
   audio_url: string;
-  script?: string;
-  voice_id?: string;
+  script?: string | null;
+  voice_id?: string | null;
   generation_type: 'ai' | 'upload';
   version: number;
   created_at: string;

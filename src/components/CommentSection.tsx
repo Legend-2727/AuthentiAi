@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Heart, Reply, Send } from 'lucide-react';
-import { useComments } from '../hooks/useFeed';
+import { useComments } from '../hooks/useComments';
 import { Comment } from '../types/feed';
 import { formatDistanceToNow } from 'date-fns';
+
+// Component for displaying and managing comments
 
 interface CommentSectionProps {
   postId: string;

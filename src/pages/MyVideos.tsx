@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Video, Calendar, Download, Eye, Trash2 } from 'lucide-react';
+import { Video, Calendar, Download, Eye, Trash2, Tag, User, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-toastify';
@@ -8,9 +8,14 @@ import { toast } from 'react-toastify';
 interface VideoRecord {
   id: string;
   title: string;
+  description?: string;
   script: string;
   video_url: string | null;
   status: string;
+  generation_type?: string;
+  replica_id?: string;
+  replica_type?: string;
+  tags?: string[];
   created_at: string;
 }
 
@@ -19,13 +24,7 @@ const MyVideos = () => {
   const [videos, setVideos] = useState<VideoRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchVideos();
-    }
-  }, [user]);
-
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -48,7 +47,13 @@ const MyVideos = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchVideos();
+    }
+  }, [user, fetchVideos]);
 
   const deleteVideo = async (videoId: string) => {
     if (!confirm('Are you sure you want to delete this video?')) return;
@@ -76,6 +81,7 @@ const MyVideos = () => {
     const statusConfig = {
       pending: { color: 'bg-yellow-100 text-yellow-800', text: 'Pending' },
       processing: { color: 'bg-blue-100 text-blue-800', text: 'Processing' },
+      generating: { color: 'bg-purple-100 text-purple-800', text: 'Generating' },
       completed: { color: 'bg-green-100 text-green-800', text: 'Completed' },
       failed: { color: 'bg-red-100 text-red-800', text: 'Failed' },
     };
@@ -144,7 +150,37 @@ const MyVideos = () => {
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="text-lg font-semibold text-gray-900">{video.title}</h3>
                         {getStatusBadge(video.status)}
+                        {video.generation_type && (
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            video.generation_type === 'personal_replica' ? 'bg-purple-100 text-purple-800' :
+                            video.generation_type === 'stock_replica' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {video.generation_type === 'personal_replica' && <User className="h-3 w-3 mr-1" />}
+                            {video.generation_type === 'stock_replica' && <Users className="h-3 w-3 mr-1" />}
+                            {video.generation_type === 'personal_replica' && 'Personal Replica'}
+                            {video.generation_type === 'stock_replica' && 'Stock Replica'}
+                            {video.generation_type === 'upload' && 'Uploaded'}
+                          </span>
+                        )}
                       </div>
+
+                      {/* Tags */}
+                      {video.tags && video.tags.length > 0 && (
+                        <div className="flex items-center space-x-2 mb-3">
+                          <Tag className="h-4 w-4 text-gray-400" />
+                          <div className="flex flex-wrap gap-1">
+                            {video.tags.map((tag, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="flex items-center text-sm text-gray-500 mb-3">
                         <Calendar className="h-4 w-4 mr-1" />
@@ -156,6 +192,12 @@ const MyVideos = () => {
                           minute: '2-digit',
                         })}
                       </div>
+
+                      {video.description && (
+                        <p className="text-gray-600 text-sm mb-2 font-medium">
+                          {video.description}
+                        </p>
+                      )}
 
                       <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                         {video.script}

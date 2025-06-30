@@ -31,10 +31,49 @@ const DashboardHome = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const ensureUserExists = async (userId: string, userEmail: string) => {
+      try {
+        // Check if user already exists
+        const { data: existingUser, error: fetchError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', userId)
+          .single();
+
+        if (existingUser) {
+          return;
+        }
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          throw fetchError;
+        }
+
+        // User doesn't exist, create them
+        console.log('Creating user record in users table');
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: userId,
+            email: userEmail,
+            username: userEmail.split('@')[0],
+          });
+
+        if (insertError) {
+          throw insertError;
+        }
+      } catch (error) {
+        console.error('Error ensuring user exists:', error);
+        throw error;
+      }
+    };
+
     const fetchData = async () => {
       if (!user) return;
       
       try {
+        // Ensure user exists before fetching profile
+        await ensureUserExists(user.id, user.email || '');
+
         // Fetch user profile
         const { data: profileData, error: profileError } = await supabase
           .from('users')

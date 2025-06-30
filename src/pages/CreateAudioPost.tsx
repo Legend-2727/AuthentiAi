@@ -12,15 +12,18 @@ import {
   Hash,
   Shield,
   Download,
-  Save
+  Save,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { ElevenLabsVoice } from '../lib/elevenlabs';
+import { ElevenLabsService, ElevenLabsVoice } from '../lib/elevenlabs';
 import { useAudioPosts } from '../hooks/useAudioPosts';
+import { useBlockchainProof } from '../hooks/useBlockchainProof';
 import VoiceSelector from '../components/VoiceSelector';
 import AudioPlayer from '../components/AudioPlayer';
 import AudioThreads from '../components/AudioThreads';
+import ElevenLabsPoweredBy from '../components/ElevenLabsPoweredBy';
 
 interface AudioFormData {
   title: string;
@@ -34,6 +37,7 @@ const CreateAudioPost = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { createAudioPost } = useAudioPosts();
+  const { registerProof } = useBlockchainProof(); // Add blockchain proof functionality
   
   const [mode, setMode] = useState<'ai' | 'upload'>('ai');
   const [loading, setLoading] = useState(false);
@@ -44,6 +48,7 @@ const CreateAudioPost = () => {
   const [currentAudioPost, setCurrentAudioPost] = useState<string | null>(null);
   const [contentHash, setContentHash] = useState<string>('');
   const [isApiAvailable, setIsApiAvailable] = useState(false);
+  const [blockchainTxnId, setBlockchainTxnId] = useState<string>(''); // Track blockchain transaction ID
 
   const {
     register,
@@ -67,128 +72,72 @@ const CreateAudioPost = () => {
         const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
         
         if (!apiKey) {
-          console.warn('No ElevenLabs API key found. Using demo mode.');
+          console.warn('No ElevenLabs API key found. Using default voices.');
           setIsApiAvailable(false);
-          // Use demo voices when no API key is available
-          const demoVoices: ElevenLabsVoice[] = [
-            {
-              voice_id: 'demo-voice-1',
-              name: 'Demo Voice 1',
-              category: 'demo',
-              description: 'Demo voice for testing (no API key required)'
-            },
-            {
-              voice_id: 'demo-voice-2',
-              name: 'Demo Voice 2',
-              category: 'demo',
-              description: 'Demo voice for testing (no API key required)'
-            }
-          ];
-          
-          setVoices(demoVoices);
-          if (demoVoices.length > 0) {
-            setValue('voiceId', demoVoices[0].voice_id);
+          const defaultVoices = ElevenLabsService.getDefaultVoices();
+          setVoices(defaultVoices);
+          if (defaultVoices.length > 0) {
+            setValue('voiceId', defaultVoices[0].voice_id);
           }
+          toast.warning('No API key found. Using default voices. Add VITE_ELEVENLABS_API_KEY to .env for full functionality.');
           return;
         }
 
-        // Test API key validity first
-        const testResponse = await fetch('https://api.elevenlabs.io/v1/user', {
-          headers: {
-            'xi-api-key': apiKey,
-          },
-        });
-
-        if (!testResponse.ok) {
-          if (testResponse.status === 401) {
-            console.warn('ElevenLabs API key is invalid. Using demo mode.');
-            toast.warning('ElevenLabs API key is invalid. Using demo mode.');
-          } else {
-            console.warn(`ElevenLabs API error: ${testResponse.status}. Using demo mode.`);
-            toast.warning('ElevenLabs API is unavailable. Using demo mode.');
-          }
+        // Initialize the ElevenLabs service
+        const elevenLabsService = new ElevenLabsService(apiKey);
+        
+        // Test API key first
+        const keyTest = await elevenLabsService.testApiKey();
+        
+        if (!keyTest.valid) {
+          console.error('API key test failed:', keyTest.error);
           setIsApiAvailable(false);
-          
-          // Use demo voices when API key is invalid
-          const demoVoices: ElevenLabsVoice[] = [
-            {
-              voice_id: 'demo-voice-1',
-              name: 'Demo Voice 1',
-              category: 'demo',
-              description: 'Demo voice for testing (API unavailable)'
-            },
-            {
-              voice_id: 'demo-voice-2',
-              name: 'Demo Voice 2',
-              category: 'demo',
-              description: 'Demo voice for testing (API unavailable)'
-            }
-          ];
-          
-          setVoices(demoVoices);
-          if (demoVoices.length > 0) {
-            setValue('voiceId', demoVoices[0].voice_id);
+          const defaultVoices = ElevenLabsService.getDefaultVoices();
+          setVoices(defaultVoices);
+          if (defaultVoices.length > 0) {
+            setValue('voiceId', defaultVoices[0].voice_id);
           }
+          toast.error(`API key error: ${keyTest.error}. Using default voices.`);
           return;
         }
 
-        // Fetch real voices from ElevenLabs API
-        const response = await fetch('https://api.elevenlabs.io/v1/voices', {
-          headers: {
-            'xi-api-key': apiKey,
-          },
-        });
+        console.log('API key valid with permissions:', keyTest.permissions);
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch voices: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const voiceList = data.voices || [];
-        
-        // Transform the response to match our interface
-        const transformedVoices: ElevenLabsVoice[] = voiceList.map((voice: any) => ({
-          voice_id: voice.voice_id,
-          name: voice.name,
-          category: voice.category || 'general',
-          description: voice.description || '',
-          preview_url: voice.preview_url || ''
-        }));
-        
-        setVoices(transformedVoices);
-        setIsApiAvailable(true);
-        if (transformedVoices.length > 0) {
-          setValue('voiceId', transformedVoices[0].voice_id);
+        // Try to fetch voices from ElevenLabs
+        try {
+          const voiceList = await elevenLabsService.getVoices();
+          setVoices(voiceList);
+          setIsApiAvailable(true);
+          
+          if (voiceList.length > 0) {
+            setValue('voiceId', voiceList[0].voice_id);
+          }
+          
+          console.log(`Loaded ${voiceList.length} voices from ElevenLabs`);
+          toast.success(`Connected to ElevenLabs! Loaded ${voiceList.length} voices.`);
+        } catch (voiceError) {
+          console.warn('Could not fetch voices, but API key is valid. Using default voices:', voiceError);
+          setIsApiAvailable(true);
+          const defaultVoices = ElevenLabsService.getDefaultVoices();
+          setVoices(defaultVoices);
+          if (defaultVoices.length > 0) {
+            setValue('voiceId', defaultVoices[0].voice_id);
+          }
+          toast.warning('Using default voices. Voice list may not be complete.');
         }
         
-        console.log(`Loaded ${transformedVoices.length} voices from ElevenLabs`);
-        toast.success(`Loaded ${transformedVoices.length} voices from ElevenLabs`);
       } catch (error) {
-        console.error('Error loading voices:', error);
+        console.error('Error during voice loading:', error);
         setIsApiAvailable(false);
         
-        // Fallback to demo voices on any error
-        const demoVoices: ElevenLabsVoice[] = [
-          {
-            voice_id: 'demo-voice-1',
-            name: 'Demo Voice 1',
-            category: 'demo',
-            description: 'Demo voice for testing (API error)'
-          },
-          {
-            voice_id: 'demo-voice-2',
-            name: 'Demo Voice 2',
-            category: 'demo',
-            description: 'Demo voice for testing (API error)'
-          }
-        ];
-        
-        setVoices(demoVoices);
-        if (demoVoices.length > 0) {
-          setValue('voiceId', demoVoices[0].voice_id);
+        // Fallback to default voices
+        const defaultVoices = ElevenLabsService.getDefaultVoices();
+        setVoices(defaultVoices);
+        if (defaultVoices.length > 0) {
+          setValue('voiceId', defaultVoices[0].voice_id);
         }
         
-        toast.warning('Using demo mode. Add a valid VITE_ELEVENLABS_API_KEY to .env for real TTS.');
+        toast.error('Failed to connect to ElevenLabs. Using default voices.');
       } finally {
         setVoicesLoading(false);
       }
@@ -221,9 +170,9 @@ const CreateAudioPost = () => {
     try {
       const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
       
-      // If API is not available or voice is a demo voice, generate demo audio
-      if (!isApiAvailable || !apiKey || voiceId.startsWith('demo-voice')) {
-        console.log('Generating demo audio (API not available or demo voice selected)');
+      // If API is not available, generate demo audio
+      if (!isApiAvailable || !apiKey) {
+        console.log('Generating demo audio (API not available)');
         
         // Create a simple audio context to generate a tone as demo
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -249,6 +198,9 @@ const CreateAudioPost = () => {
         return audioUrl;
       }
 
+      // Use ElevenLabsService for real audio generation
+      const elevenLabsService = new ElevenLabsService(apiKey);
+      
       // Prepare the text for generation
       const textToGenerate = feedback ? `${script}\n\nUser feedback: ${feedback}` : script;
       
@@ -256,52 +208,19 @@ const CreateAudioPost = () => {
       console.log('Voice ID:', voiceId);
       console.log('Text length:', textToGenerate.length);
 
-      // Real ElevenLabs API call
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'xi-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          text: textToGenerate,
-          model_id: 'eleven_monolingual_v1',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5,
-            style: 0.0,
-            use_speaker_boost: true
-          },
-        }),
+      // Generate audio using the service
+      const audioBlob = await elevenLabsService.generateAudio({
+        text: textToGenerate,
+        voice_id: voiceId,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.5,
+          style: 0.0,
+          use_speaker_boost: true
+        }
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('ElevenLabs API error:', response.status, errorText);
-        
-        // If there's an API error, fall back to demo audio
-        console.log('Falling back to demo audio due to API error');
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const duration = 5;
-        const sampleRate = audioContext.sampleRate;
-        const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
-        const data = buffer.getChannelData(0);
-        
-        for (let i = 0; i < data.length; i++) {
-          const time = i / sampleRate;
-          const frequency = 440 + Math.sin(time * 2) * 100;
-          data[i] = Math.sin(2 * Math.PI * frequency * time) * 0.1 * Math.exp(-time * 0.5);
-        }
-        
-        const wavBlob = audioBufferToWav(buffer);
-        const audioUrl = URL.createObjectURL(wavBlob);
-        setGeneratedAudio(audioUrl);
-        
-        toast.warning('API error occurred. Generated demo audio instead.');
-        return audioUrl;
-      }
-
-      const audioBlob = await response.blob();
       console.log('Audio generated successfully. Blob size:', audioBlob.size);
       
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -408,17 +327,30 @@ const CreateAudioPost = () => {
   };
 
   const uploadAudioToStorage = async (audioBlob: Blob, fileName: string): Promise<string> => {
-    const { data, error } = await supabase.storage
-      .from('audio-posts')
-      .upload(`${user?.id}/${fileName}`, audioBlob);
+    try {
+      console.log('Uploading to storage:', fileName, 'Size:', audioBlob.size, 'Type:', audioBlob.type);
+      
+      const { data, error } = await supabase.storage
+        .from('audio-posts')
+        .upload(`${user?.id}/${fileName}`, audioBlob);
 
-    if (error) throw error;
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('audio-posts')
-      .getPublicUrl(data.path);
+      console.log('Upload successful, data:', data);
 
-    return publicUrl;
+      const { data: { publicUrl } } = supabase.storage
+        .from('audio-posts')
+        .getPublicUrl(data.path);
+
+      console.log('Public URL generated:', publicUrl);
+      return publicUrl;
+    } catch (error) {
+      console.error('Error in uploadAudioToStorage:', error);
+      throw error;
+    }
   };
 
   const onSubmit = async (data: AudioFormData) => {
@@ -432,18 +364,27 @@ const CreateAudioPost = () => {
     try {
       let audioUrl = '';
       
+      console.log('Starting audio upload process...');
+      console.log('Mode:', mode, 'Generated audio:', !!generatedAudio, 'Uploaded file:', !!uploadedFile);
+      
       if (mode === 'upload' && uploadedFile) {
         // Upload the file to Supabase storage
+        console.log('Uploading file to storage...');
         audioUrl = await uploadAudioToStorage(uploadedFile, `${Date.now()}-${uploadedFile.name}`);
       } else if (generatedAudio) {
         // Convert the generated audio URL to blob and upload
+        console.log('Converting generated audio to blob...');
         const response = await fetch(generatedAudio);
         const audioBlob = await response.blob();
+        console.log('Audio blob size:', audioBlob.size, 'Type:', audioBlob.type);
         audioUrl = await uploadAudioToStorage(audioBlob, `${Date.now()}-generated.mp3`);
       }
 
+      console.log('Audio uploaded successfully, URL:', audioUrl);
+
       // Create the audio post
-      const audioPost = await createAudioPost({
+      console.log('Creating audio post in database...');
+      const audioPostData = {
         title: data.title,
         description: data.description,
         tags: data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
@@ -452,13 +393,50 @@ const CreateAudioPost = () => {
         voice_id: mode === 'ai' ? data.voiceId : undefined,
         generation_type: mode,
         version: 1,
-      });
+      };
+      console.log('Audio post data:', audioPostData);
+      
+      const audioPost = await createAudioPost(audioPostData);
+      console.log('Audio post created successfully:', audioPost);
+
+      // Register audio content on blockchain for content protection
+      try {
+        console.log('Registering audio content on blockchain...');
+        let audioFile: File | null = null;
+        
+        if (mode === 'upload' && uploadedFile) {
+          // Use the uploaded file
+          audioFile = uploadedFile;
+        } else if (generatedAudio) {
+          // Convert generated audio to File for blockchain registration
+          const response = await fetch(generatedAudio);
+          const audioBlob = await response.blob();
+          audioFile = new File([audioBlob], `${data.title || 'audio'}.mp3`, {
+            type: 'audio/mp3'
+          });
+        }
+        
+        if (audioFile) {
+          const txnId = await registerProof(audioFile, 'audio', audioPost.id);
+          if (txnId) {
+            setBlockchainTxnId(txnId);
+            console.log('Audio content successfully registered on blockchain:', txnId);
+          }
+        }
+      } catch (blockchainError) {
+        console.warn('Blockchain registration failed for audio content (post still saved):', blockchainError);
+        // Don't fail the entire process if blockchain registration fails
+      }
 
       setCurrentAudioPost(audioPost.id);
       toast.success('Audio post created successfully!');
     } catch (error) {
       console.error('Error creating audio post:', error);
-      toast.error('Failed to create audio post');
+      if (error instanceof Error) {
+        toast.error(`Failed to create audio post: ${error.message}`);
+      } else {
+        toast.error('Failed to create audio post');
+      }
     } finally {
       setLoading(false);
     }
@@ -492,28 +470,35 @@ const CreateAudioPost = () => {
       transition={{ duration: 0.5 }}
       className="max-w-4xl mx-auto"
     >
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-8 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/dashboard/create')}
-              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 flex items-center">
-                <Mic className="h-8 w-8 mr-3 text-purple-600" />
-                Create Audio Post
-              </h2>
-              <p className="mt-1 text-gray-600">
-                Generate AI-powered podcasts or upload your own audio content.
-              </p>
-              {!isApiAvailable && (
-                <p className="mt-1 text-sm text-amber-600 bg-amber-50 px-2 py-1 rounded">
-                  Demo mode: Add VITE_ELEVENLABS_API_KEY to .env for real TTS
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border dark:border-gray-700">
+        <div className="px-6 py-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/dashboard/create')}
+                className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                title="Go back to create content"
+                aria-label="Go back to create content"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                  <Mic className="h-8 w-8 mr-3 text-purple-600 dark:text-purple-400" />
+                  Create Audio Post
+                </h2>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Generate AI-powered podcasts or upload your own audio content.
                 </p>
-              )}
+                {!isApiAvailable && (
+                  <p className="mt-1 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
+                    Demo mode: Add VITE_ELEVENLABS_API_KEY to .env for real TTS
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="hidden md:block">
+              <ElevenLabsPoweredBy size="md" />
             </div>
           </div>
         </div>
@@ -701,6 +686,26 @@ const CreateAudioPost = () => {
                   <Shield className="h-5 w-5 mr-2 text-green-600" />
                   Proof of Authorship
                 </h3>
+                
+                {/* Blockchain Verification Badge */}
+                {blockchainTxnId && (
+                  <div className="mb-4">
+                    <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Blockchain Verified
+                      <a
+                        href={`https://testnet.algoexplorer.io/tx/${blockchainTxnId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 inline-flex items-center text-green-600 hover:text-green-700"
+                        title="View on blockchain"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600 mb-2">Content Hash:</p>
@@ -719,7 +724,10 @@ const CreateAudioPost = () => {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-3">
-                  This hash and timestamp can be used to verify the authenticity and creation time of your content.
+                  {blockchainTxnId 
+                    ? 'This content is permanently registered on the Algorand blockchain for authenticity verification.'
+                    : 'This hash and timestamp can be used to verify the authenticity and creation time of your content.'
+                  }
                 </p>
               </div>
             )}
