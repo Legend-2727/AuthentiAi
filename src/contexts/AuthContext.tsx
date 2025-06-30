@@ -107,14 +107,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!error && data.user) {
         // Create a user profile in the users table
-        await supabase.from('users').insert([
+        const { error: profileError } = await supabase.from('users').insert([
           {
             id: data.user.id,
             username,
             email,
-            name: username, // Provide the required name field
           },
         ]);
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Return the auth data even if profile creation fails
+          // The user can still use the app with auth.users data
+        }
       }
 
       return { data, error };
