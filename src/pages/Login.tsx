@@ -86,7 +86,7 @@ const Login = () => {
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-900 via-indigo-950 to-purple-900 overflow-hidden relative">
       {/* Bolt.new Badge - Fixed Top Right */}
       <div className="fixed top-4 right-4 z-50">
-        <BoltBadge size="md" />
+        <BoltBadge size="lg" />
       </div>
       
       {/* Animated Background */}

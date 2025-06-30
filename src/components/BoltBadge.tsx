@@ -12,9 +12,9 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({ size = 'md', className = '' }) =>
   const { isDark } = useTheme();
   
   const sizeClasses = {
-    sm: 'w-6 h-6',
-    md: 'w-8 h-8', 
-    lg: 'w-12 h-12'
+    sm: 'w-8 h-8',
+    md: 'w-12 h-12', 
+    lg: 'w-16 h-16'
   };
 
   return (
@@ -22,13 +22,13 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({ size = 'md', className = '' }) =>
       href="https://bolt.new"
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center transition-transform hover:scale-105 ${className}`}
-      title="Built with bolt.new"
+      className={`inline-flex items-center transition-all duration-300 hover:scale-110 hover:drop-shadow-lg ${className}`}
+      title="Built with bolt.new - Click to visit"
     >
       <img
         src={isDark ? boltBadgeWhite : boltBadgeBlack}
         alt="Built with bolt.new"
-        className={sizeClasses[size]}
+        className={`${sizeClasses[size]} drop-shadow-md hover:drop-shadow-xl transition-all duration-300`}
       />
     </a>
   );

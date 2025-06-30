@@ -13,7 +13,7 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8 relative">
       {/* Bolt.new Badge - Fixed Top Right */}
       <div className="fixed top-4 right-4 z-50">
-        <BoltBadge size="md" />
+        <BoltBadge size="lg" />
       </div>
       
       <motion.div

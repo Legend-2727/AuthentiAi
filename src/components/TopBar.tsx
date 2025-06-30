@@ -16,6 +16,11 @@ const TopBar: React.FC = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
+      {/* Bolt.new Badge - Fixed Top Right Corner */}
+      <div className="absolute top-2 right-2 z-50">
+        <BoltBadge size="lg" />
+      </div>
+      
       <div className="container mx-auto px-4 py-2 flex items-center justify-between">
         <div className="flex-1"></div> {/* Left spacer */}
         
@@ -29,10 +34,9 @@ const TopBar: React.FC = () => {
           </span>
         </div>
         
-        {/* Right side with star wallet and bolt.new badge */}
-        <div className="flex-1 flex justify-end items-center space-x-3">
+        {/* Right side with star wallet - positioned to avoid badge */}
+        <div className="flex-1 flex justify-end items-center pr-16">
           <StarWallet onBuyStars={() => setShowBuyStarsModal(true)} />
-          <BoltBadge size="md" />
         </div>
       </div>
       
