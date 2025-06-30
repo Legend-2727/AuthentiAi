@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
+import BoltBadge from './BoltBadge';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -9,7 +10,12 @@ interface AuthLayoutProps {
 
 const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Bolt.new Badge - Fixed Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <BoltBadge size="md" />
+      </div>
+      
       <motion.div
         className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700"
         initial={{ opacity: 0, y: 20 }}

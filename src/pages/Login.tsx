@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, Lock, Mail, ChevronRight, Github, Twitter, Mic, Video, Star, CreditCard } from 'lucide-react';
 import FormInput from '../components/FormInput';
+import BoltBadge from '../components/BoltBadge';
 
 interface LoginFormValues {
   email: string;
@@ -82,7 +83,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-900 via-indigo-950 to-purple-900 overflow-hidden">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-900 via-indigo-950 to-purple-900 overflow-hidden relative">
+      {/* Bolt.new Badge - Fixed Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <BoltBadge size="md" />
+      </div>
+      
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 opacity-10">

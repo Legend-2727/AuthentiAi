@@ -1,12 +1,11 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Shield } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
 import StarWallet from './StarWallet';
 import BuyStarsModal from './BuyStarsModal';
+import BoltBadge from './BoltBadge';
 
 const TopBar: React.FC = () => {
-  const { isDark } = useTheme();
   const location = useLocation();
   const [showBuyStarsModal, setShowBuyStarsModal] = React.useState(false);
   
@@ -30,9 +29,10 @@ const TopBar: React.FC = () => {
           </span>
         </div>
         
-        {/* Right side with star wallet */}
-        <div className="flex-1 flex justify-end">
+        {/* Right side with star wallet and bolt.new badge */}
+        <div className="flex-1 flex justify-end items-center space-x-3">
           <StarWallet onBuyStars={() => setShowBuyStarsModal(true)} />
+          <BoltBadge size="md" />
         </div>
       </div>
       
