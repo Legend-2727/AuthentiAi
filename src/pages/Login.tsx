@@ -114,7 +114,7 @@ const Login = () => {
                 <BlockchainShieldLogo isDark={true} />
               </div>
               <h2 className="text-3xl font-bold text-white">
-                <span className="font-['Abril_Fatface',_cursive] italic cursive-flow">Veridica</span> Platform
+                <span className="font-['Abril_Fatface',_cursive] italic cursive-flow">Veridica</span>
               </h2>
             </div>
             <p className="text-indigo-200 text-lg">
@@ -341,7 +341,7 @@ const BrandSection = () => {
         </div>
         
         <p className="text-indigo-300 mt-4 text-lg">
-          Blockchain Content Authenticity Platform
+          Blockchain Content Authenticity
         </p>
       </motion.div>
     </div>
