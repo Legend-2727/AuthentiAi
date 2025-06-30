@@ -17,6 +17,10 @@ export default {
           'Arial',
           'sans-serif',
         ],
+        cursive: [
+          'Abril Fatface',
+          'cursive'
+        ],
       },
       colors: {
         // Primary color with shades
@@ -64,6 +68,9 @@ export default {
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'wave': 'waveAnimation 3s linear infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'glow': 'glow 3s ease-in-out infinite',
       },
     },
   },
