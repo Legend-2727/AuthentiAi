@@ -52,6 +52,33 @@ const FeedPost = ({
   const [starCount, setStarCount] = useState(10);
   const [starMessage, setStarMessage] = useState('');
   const [isProcessingStars, setIsProcessingStars] = useState(false);
+  const [viewCount, setViewCount] = useState(post.view_count || 0);
+
+  // Increment view count when post is rendered
+  useState(() => {
+    // Update local view count
+    setViewCount(prevCount => prevCount + 1);
+    
+    // Store view count in localStorage to persist
+    const viewCountKey = `view_count_${post.id}`;
+    const currentViews = parseInt(localStorage.getItem(viewCountKey) || '0', 10);
+    localStorage.setItem(viewCountKey, (currentViews + 1).toString());
+    
+    // Try to update view count in database
+    try {
+      const updateViewCount = async () => {
+        const { supabase } = await import('../lib/supabase');
+        await supabase
+          .from('feed_posts')
+          .update({ view_count: currentViews + 1 })
+          .eq('id', post.id);
+      };
+      
+      updateViewCount();
+    } catch (error) {
+      console.error('Error updating view count:', error);
+    }
+  }, [post.id]);
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -272,7 +299,7 @@ const FeedPost = ({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <Eye className="w-4 h-4" />
-              <span>{formatNumber(post.view_count)} views</span>
+              <span>{formatNumber(viewCount)} views</span>
             </div>
             <div className="flex items-center space-x-1">
               <Star className="w-4 h-4 text-yellow-500" />

@@ -5,8 +5,6 @@ import { supabase } from '../lib/supabase';
 
 // Hook for managing social feed posts
 
-// Hook for managing feed posts
-
 export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<FeedPost[]>([]);
@@ -334,10 +332,21 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
           }
         });
 
-        setPosts(sortedPosts);
+        // Update posts with view counts from localStorage
+        const postsWithViews = sortedPosts.map(post => {
+          const viewCountKey = `view_count_${post.id}`;
+          const savedViews = localStorage.getItem(viewCountKey);
+          const viewCount = savedViews ? parseInt(savedViews, 10) : 0;
+          return {
+            ...post,
+            view_count: viewCount
+          };
+        });
+
+        setPosts(postsWithViews);
 
         // Generate stats for each post
-        const statsMap = sortedPosts.reduce((acc, post) => {
+        const statsMap = postsWithViews.reduce((acc, post) => {
           acc[post.id] = generatePostStats(post.id);
           return acc;
         }, {} as { [postId: string]: PostStats });
@@ -345,14 +354,11 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         setPostStats(statsMap);
         
         // Increment view count for each post
-        sortedPosts.forEach(post => {
+        postsWithViews.forEach(post => {
           // Update view count in localStorage
           const viewCountKey = `view_count_${post.id}`;
           const currentViews = parseInt(localStorage.getItem(viewCountKey) || '0', 10);
           localStorage.setItem(viewCountKey, (currentViews + 1).toString());
-          
-          // Update post object
-          post.view_count = currentViews + 1;
         });
         
         return;
@@ -393,10 +399,21 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
         }
       });
 
-      setPosts(sortedPosts);
+      // Update posts with view counts from localStorage
+      const postsWithViews = sortedPosts.map(post => {
+        const viewCountKey = `view_count_${post.id}`;
+        const savedViews = localStorage.getItem(viewCountKey);
+        const viewCount = savedViews ? parseInt(savedViews, 10) : post.view_count || 0;
+        return {
+          ...post,
+          view_count: viewCount
+        };
+      });
+
+      setPosts(postsWithViews);
 
       // Generate stats for each post
-      const statsMap = sortedPosts.reduce((acc, post) => {
+      const statsMap = postsWithViews.reduce((acc, post) => {
         acc[post.id] = generatePostStats(post.id);
         return acc;
       }, {} as { [postId: string]: PostStats });
@@ -404,16 +421,19 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
       setPostStats(statsMap);
       
       // Increment view count for each post
-      sortedPosts.forEach(async post => {
+      postsWithViews.forEach(async post => {
         try {
+          // Update view count in localStorage
+          const viewCountKey = `view_count_${post.id}`;
+          const currentViews = parseInt(localStorage.getItem(viewCountKey) || '0', 10);
+          const newViewCount = currentViews + 1;
+          localStorage.setItem(viewCountKey, newViewCount.toString());
+          
           // Update view count in database
           await supabase
             .from('feed_posts')
-            .update({ view_count: post.view_count + 1 })
+            .update({ view_count: newViewCount })
             .eq('id', post.id);
-            
-          // Update post object
-          post.view_count += 1;
         } catch (error) {
           console.error('Error updating view count:', error);
         }
@@ -423,10 +443,22 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
       console.error('Error fetching posts:', error);
       // Fall back to mock data
       const mockPosts = generateMockPosts();
-      setPosts(mockPosts);
+      
+      // Update posts with view counts from localStorage
+      const postsWithViews = mockPosts.map(post => {
+        const viewCountKey = `view_count_${post.id}`;
+        const savedViews = localStorage.getItem(viewCountKey);
+        const viewCount = savedViews ? parseInt(savedViews, 10) : 0;
+        return {
+          ...post,
+          view_count: viewCount
+        };
+      });
+      
+      setPosts(postsWithViews);
       
       // Generate stats for each post
-      const statsMap = mockPosts.reduce((acc, post) => {
+      const statsMap = postsWithViews.reduce((acc, post) => {
         acc[post.id] = generatePostStats(post.id);
         return acc;
       }, {} as { [postId: string]: PostStats });
@@ -548,7 +580,7 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
   const sendStarDonation = async (postId: string, starCount: number, message?: string) => {
     if (!user) return;
 
-    // Update star count in stats
+    // Update star count in stats immediately for better UX
     setPostStats(prev => {
       const currentStats = prev[postId];
       if (!currentStats) return prev;
@@ -569,15 +601,15 @@ export const useFeed = (sortBy: SortOption = 'recent', searchTags: string[] = []
       };
     });
     
+    // Find the post to get creator ID
+    const post = posts.find(p => p.id === postId);
+    if (!post) {
+      console.error('Post not found for star donation');
+      return;
+    }
+    
     // Try to update star donations in the database
     try {
-      // Find the post to get creator ID
-      const post = posts.find(p => p.id === postId);
-      if (!post) {
-        console.error('Post not found for star donation');
-        return;
-      }
-      
       // Create star donation record
       await supabase
         .from('star_donations')

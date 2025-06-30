@@ -615,6 +615,45 @@ export const processStarTransaction = async (
       saveStarTransaction(creatorTransaction);
       saveStarTransaction(sharerTransaction);
       
+      // Update post stats in localStorage
+      if (contentId) {
+        const statsKey = `post_stats_${contentId}`;
+        const storedStats = localStorage.getItem(statsKey);
+        
+        if (storedStats) {
+          const stats = JSON.parse(storedStats);
+          stats.star_count = (stats.star_count || 0) + starsGiven;
+          stats.star_value = (stats.star_value || 0) + (starsGiven * 0.01);
+          localStorage.setItem(statsKey, JSON.stringify(stats));
+        }
+      }
+      
+      // Try to update database if available
+      try {
+        const { supabase } = await import('./supabase');
+        
+        // Update feed_posts table
+        if (contentId) {
+          const { data: post } = await supabase
+            .from('feed_posts')
+            .select('star_count, star_value')
+            .eq('id', contentId)
+            .single();
+            
+          if (post) {
+            await supabase
+              .from('feed_posts')
+              .update({
+                star_count: (post.star_count || 0) + starsGiven,
+                star_value: (post.star_value || 0) + (starsGiven * 0.01)
+              })
+              .eq('id', contentId);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to update database with star transaction:', error);
+      }
+      
       return { 
         success: true, 
         transaction: creatorTransaction // Return the main transaction
@@ -622,6 +661,45 @@ export const processStarTransaction = async (
     } else {
       // Regular transaction (no split)
       saveStarTransaction(transaction);
+      
+      // Update post stats in localStorage
+      if (contentId) {
+        const statsKey = `post_stats_${contentId}`;
+        const storedStats = localStorage.getItem(statsKey);
+        
+        if (storedStats) {
+          const stats = JSON.parse(storedStats);
+          stats.star_count = (stats.star_count || 0) + starsGiven;
+          stats.star_value = (stats.star_value || 0) + (starsGiven * 0.01);
+          localStorage.setItem(statsKey, JSON.stringify(stats));
+        }
+      }
+      
+      // Try to update database if available
+      try {
+        const { supabase } = await import('./supabase');
+        
+        // Update feed_posts table
+        if (contentId) {
+          const { data: post } = await supabase
+            .from('feed_posts')
+            .select('star_count, star_value')
+            .eq('id', contentId)
+            .single();
+            
+          if (post) {
+            await supabase
+              .from('feed_posts')
+              .update({
+                star_count: (post.star_count || 0) + starsGiven,
+                star_value: (post.star_value || 0) + (starsGiven * 0.01)
+              })
+              .eq('id', contentId);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to update database with star transaction:', error);
+      }
       
       return { 
         success: true, 
