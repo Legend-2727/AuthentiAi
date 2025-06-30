@@ -30,3 +30,33 @@
     opacity: 1;
   }
 }
+
+/* Wave animation for brand text */
+@keyframes waveAnimation {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Float animation for background elements */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Glow animation */
+@keyframes glow {
+  0%, 100% {
+    filter: blur(5px) brightness(1);
+  }
+  50% {
+    filter: blur(10px) brightness(1.2);
+  }
+}
